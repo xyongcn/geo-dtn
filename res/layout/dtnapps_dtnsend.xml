@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent">
+
+  <TextView android:layout_column="1" 
+	android:id="@+id/DTNApps_DTNSend_DestEIDCaptionTextView"
+	android:layout_width="wrap_content" android:textSize="15sp" 
+	android:layout_height="wrap_content"
+	android:layout_marginTop="8dp"
+	android:text="Destination Endpoint ID:"></TextView>
+		
+   <EditText 
+    android:layout_column="1" 
+   android:text="dtn://192.168.1.5.wu.com/test" android:id="@+id/DTNApps_DTNSend_DestEIDEditText" 
+   android:layout_width="fill_parent" android:layout_height="wrap_content"
+  ></EditText>
+
+
+
+<LinearLayout 
+android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content">
+<Button android:layout_width="wrap_content" android:layout_height="wrap_content" 
+		android:id="@+id/DTNApps_DTNSend_SendButton"
+		 
+		android:text="Send"   
+  />
+
+<Button
+    android:id="@+id/DTNApps_DTNSend_BigFileButton"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="SendBig" />
+  
+<Button android:layout_width="wrap_content" android:layout_height="wrap_content" 
+android:id="@+id/DTNApps_DTNSend_CloseButton"
+android:text="Close"   
+android:layout_marginLeft="10dp"
+
+  />
+  
+</LinearLayout>
+
+<TextView
+    android:id="@+id/Dest_LongitudeCaption"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:text="Dest Longitude:"
+    android:textSize="15sp" />
+
+<EditText
+    android:id="@+id/Dest_Longitude"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:ems="10"
+    android:inputType="numberDecimal" />
+
+<TextView
+    android:id="@+id/Dest_LatitudeCaption"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:text="Dest Latitude:"
+    android:textSize="15sp" />
+
+<EditText
+    android:id="@+id/Dest_Latitude"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:ems="10"
+    android:inputType="numberDecimal" />
+
+  <TextView
+      android:id="@+id/DTNApps_DTNSend_MessageCaptionTextView"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="8dp"
+      android:text="Message:"
+      android:textSize="15sp" />
+
+  <EditText
+      android:id="@+id/DTNApps_DTNSend_MessageTextView"
+      android:layout_width="fill_parent"
+      android:layout_height="84dp"
+      android:ems="10"
+      android:lines="6" >
+
+      <requestFocus />
+  </EditText>
+		
+</LinearLayout>
