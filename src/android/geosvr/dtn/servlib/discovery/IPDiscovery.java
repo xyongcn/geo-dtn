@@ -294,6 +294,8 @@ public class IPDiscovery extends Discovery implements Runnable {
 							byte[] name = hdr.sender_name().getBytes();
 							buf.put(name);
 
+							//可以在这儿加入验证信息
+							
 							int l = hdr.length();
 							data = new byte[l];
 							int z;

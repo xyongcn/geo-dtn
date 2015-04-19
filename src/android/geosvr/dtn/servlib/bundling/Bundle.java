@@ -910,7 +910,8 @@ public class Bundle implements Serializable {
 
 
 	public void setDestLongitude(double destLongitude) {
-		this.destLongitude_ = destLongitude;
+//		this.destLongitude_ = destLongitude;
+		this.destLongitude_ = -10;
 	}
 
 
@@ -1183,5 +1184,109 @@ public class Bundle implements Serializable {
 	public void setCancelOtherLinkTransmit(boolean canCancel)
 	{
 		cancelOtherLinkTransmit=canCancel;
+	}
+	
+	/*
+	public long test=1111;*/
+	//添加电子地图DTN算法的必要属性
+	private long timestamp;
+	private long invalidtime;//bundle的失效时间
+	private int zeroArea;//0层区域，最底层区域，也是可达层区域
+	private int firstArea;//1层区域，区域数字有小到大，依次范围扩大
+	private int secondArea;//2层区域
+	private int thirdArea;//3层区域
+	
+	private int deliverBundleNum;//传递阶段的bundle数量
+	private int floodBundleNum;//洪泛扩散阶段bundle的数量
+	private int isFlooding;//是否进入过了flood阶段
+	
+	public long timestamp()
+	{
+		return timestamp;
+	}
+	
+	public void setTimestamp(long timestamp)
+	{
+		this.timestamp=timestamp;
+	}
+	
+	public long invalidtime()
+	{
+		return invalidtime;
+	}
+	
+	public void setInvalidtime(long invalidtime)
+	{
+		this.invalidtime=invalidtime;
+	}
+	
+	public int zeroArea()
+	{
+		return zeroArea;
+	}
+	
+	public void setZeroArea(int zeroarea)
+	{
+		this.zeroArea=zeroarea;
+	}
+	
+	public int firstArea()
+	{
+		return this.firstArea;
+	}
+	
+	public void setFirstArea(int firstarea)
+	{
+		this.firstArea=firstarea;
+	}
+	
+	public int secondArea()
+	{
+		return this.secondArea;
+	}
+	
+	public void setSecondArea(int secondarea)
+	{
+		this.secondArea=secondarea;
+	}
+	
+	public int thirdArea()
+	{
+		return thirdArea;
+	}
+	
+	public void setThirdArea(int thirdarea)
+	{
+		this.thirdArea=thirdarea;
+	}
+	
+	public int deliverBundleNum()
+	{
+		return this.deliverBundleNum;
+	}
+	
+	public void setDeliverBundleNum(int deliverbundlenum)
+	{
+		this.deliverBundleNum=deliverbundlenum;
+	}
+	
+	public int floodBundleNum()
+	{
+		return this.floodBundleNum;
+	}
+	
+	public void setFloodBundleNum(int floodbundlenum)
+	{
+		this.floodBundleNum=floodbundlenum;
+	}
+	
+	public int isFlooding()
+	{
+		return isFlooding;
+	}
+	
+	public void setIsFlooding(int isflooding)
+	{
+		this.isFlooding=isflooding;
 	}
 };

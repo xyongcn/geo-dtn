@@ -168,6 +168,82 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
         	return -1;
         }
         
+        //加入电子地图bundle数据读取的部分
+        /* private long timestamp;
+     	private long invalidtime;//bundle的失效时间
+     	private int zeroArea;//0层区域，最底层区域，也是可达层区域
+     	private int firstArea;//1层区域，区域数字有小到大，依次范围扩大
+     	private int secondArea;//2层区域
+     	private int thirdArea;//3层区域
+     	
+     	private int deliverBundleNum;//传递阶段的bundle数量
+     	private int floodBundleNum;//洪泛扩散阶段bundle的数量
+     	private int isFlooding;//是否进入过了flood阶段
+ */        
+        len -= read_sdnv(buf_block_content, primary.timestamp_flag());
+        if (primary.timestamp_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
+        			primary.timestamp_flag_value()));
+        	return -1;
+        }
+        bundle.setTimestamp(primary.timestamp_flag_value());
+        
+        len -= read_sdnv(buf_block_content, primary.invalidtime_flag());
+        if (primary.invalidtime_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
+        			primary.invalidtime_flag_value()));
+        	return -1;
+        }
+        bundle.setTimestamp(primary.invalidtime_flag_value());
+        
+        len -= read_sdnv(buf_block_content, primary.zeroArea_flag());
+        if (primary.zeroArea_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
+        			primary.zeroArea_flag_value()));
+        	return -1;
+        }
+        bundle.setTimestamp(primary.zeroArea_flag_value());
+        
+        len -= read_sdnv(buf_block_content, primary.firstArea_flag());
+        if (primary.firstArea_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
+        			primary.firstArea_flag_value()));
+        	return -1;
+        }
+        bundle.setTimestamp(primary.firstArea_flag_value());
+        
+        len -= read_sdnv(buf_block_content, primary.secondArea_flag());
+        if (primary.secondArea_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
+        			primary.secondArea_flag_value()));
+        	return -1;
+        }
+        bundle.setTimestamp(primary.secondArea_flag_value());
+        
+        len -= read_sdnv(buf_block_content, primary.thirdArea_flag());
+        if (primary.thirdArea_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
+        			primary.thirdArea_flag_value()));
+        	return -1;
+        }
+        bundle.setTimestamp(primary.thirdArea_flag_value());
+        
+        len -= read_sdnv(buf_block_content, primary.deliverBundleNum_flag());
+        if (primary.deliverBundleNum_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
+        			primary.deliverBundleNum_flag_value()));
+        	return -1;
+        }
+        bundle.setTimestamp(primary.deliverBundleNum_flag_value());
+        
+        len -= read_sdnv(buf_block_content, primary.floodBundleNum_flag());
+        if (primary.floodBundleNum_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
+        			primary.floodBundleNum_flag_value()));
+        	return -1;
+        }
+        bundle.setTimestamp(primary.floodBundleNum_flag_value());
+        
+        len -= read_sdnv(buf_block_content, primary.isFlooding_flag());
+        if (primary.isFlooding_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
+        			primary.isFlooding_flag_value()));
+        	return -1;
+        }
+        bundle.setTimestamp(primary.isFlooding_flag_value());
+        
+        //原有的数据处理
         len -= read_sdnv(buf_block_content, primary.lifetime());
         if (primary.lifetime_value() > Integer.MAX_VALUE) {
             Log.e(TAG, String.format("lifetime is too large: %s", primary.lifetime));
@@ -420,6 +496,7 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
         xmit_blocks.dict().add_eid(bundle.source());
         xmit_blocks.dict().add_eid(bundle.replyto());
         xmit_blocks.dict().add_eid(bundle.custodian());
+        
 
         // make sure to add the primary to the front
         xmit_blocks.add(0, new BlockInfo(this, source));
@@ -495,6 +572,30 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
         len -= write_sdnv(primary.custodian_ssp_offset(), buf);
         len -= write_sdnv(bundle.creation_ts().seconds(), buf);
         len -= write_sdnv(bundle.creation_ts().seqno(), buf);
+        
+        
+        //加入电子地图bundle写数据的部分
+        /* private long timestamp;
+     	private long invalidtime;//bundle的失效时间
+     	private int zeroArea;//0层区域，最底层区域，也是可达层区域
+     	private int firstArea;//1层区域，区域数字有小到大，依次范围扩大
+     	private int secondArea;//2层区域
+     	private int thirdArea;//3层区域
+     	
+     	private int deliverBundleNum;//传递阶段的bundle数量
+     	private int floodBundleNum;//洪泛扩散阶段bundle的数量
+     	private int isFlooding;//是否进入过了flood阶段
+ */      
+        len -= write_sdnv(bundle.timestamp(),buf);
+        len -= write_sdnv(bundle.invalidtime(),buf);
+        len -= write_sdnv(bundle.zeroArea(),buf);
+        len -= write_sdnv(bundle.firstArea(),buf);
+        len -= write_sdnv(bundle.secondArea(),buf);
+        len -= write_sdnv(bundle.thirdArea(),buf);
+        len -= write_sdnv(bundle.deliverBundleNum(),buf);
+        len -= write_sdnv(bundle.floodBundleNum(),buf);
+        len -= write_sdnv(bundle.isFlooding(),buf);
+        
         len -= write_sdnv(bundle.expiration(), buf);
         len -= write_sdnv(primary.dictionary_length(), buf);
 
@@ -654,7 +755,19 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
         private long[] creation_time = new long[1];
         private long[] creation_sequence = new long[1];
         private long[] lifetime  = new long[1];
-        private long[] dictionary_length  = new long[1];;
+        private long[] dictionary_length  = new long[1];
+        
+        //电子地图DTN添加的必要bundle信息
+        private long[] timestamp_flag = new long[1];
+    	private long[] invalidtime_flag = new long[1];//bundle的失效时间
+    	private int[] zeroArea_flag = new int[1];//0层区域，最底层区域，也是可达层区域
+    	private int[] firstArea_flag = new int[1];//1层区域，区域数字有小到大，依次范围扩大
+    	private int[] secondArea_flag = new int[1];//2层区域
+    	private int[] thirdArea_flag = new int[1];//3层区域
+    	
+    	private int[] deliverBundleNum_flag = new int[1];//传递阶段的bundle数量
+    	private int[] floodBundleNum_flag = new int[1];//洪泛扩散阶段bundle的数量
+    	private int[] isFlooding_flag = new int[1];//是否进入过了flood阶段
       
         public PrimaryBlock(){
             version = 0 ;
@@ -672,7 +785,113 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
             creation_sequence[0] = 0;
             lifetime[0]  = 0;
         	dictionary_length[0] = 0;
+        	
+        	//DTN必要属性赋初值
+        	timestamp_flag[0]=0;
+        	invalidtime_flag[0]=0;
+        	zeroArea_flag[0]=0;
+        	firstArea_flag[0]=0;
+        	secondArea_flag[0]=0;
+        	thirdArea_flag[0]=0;
+        	
+        	deliverBundleNum_flag[0]=0;
+        	floodBundleNum_flag[0]=0;
+        	isFlooding_flag[0]=0;
         }
+        
+        //设置操作属性的函数
+        public long timestamp_flag_value()
+        {
+        	return timestamp_flag[0];
+        }
+        
+        public long[] timestamp_flag()
+        {
+        	return timestamp_flag;
+        }
+        
+        public long invalidtime_flag_value()
+        {
+        	return invalidtime_flag[0];
+        }
+        
+        public long[] invalidtime_flag()
+        {
+        	return invalidtime_flag;
+        }
+        
+        public int zeroArea_flag_value()
+        {
+        	return zeroArea_flag[0];
+        }
+        
+        public int[] zeroArea_flag()
+        {
+        	return zeroArea_flag;
+        }
+        
+        public int firstArea_flag_value()
+        {
+        	return firstArea_flag[0];
+        }
+        
+        public int[] firstArea_flag()
+        {
+        	return firstArea_flag;
+        }
+        
+        public int secondArea_flag_value()
+        {
+        	return secondArea_flag[0];
+        }
+        
+        public int[] secondArea_flag()
+        {
+        	return secondArea_flag;
+        }
+        
+        public int thirdArea_flag_value()
+        {
+        	return thirdArea_flag[0];
+        }
+        
+        public int[] thirdArea_flag()
+        {
+        	return thirdArea_flag;
+        }
+        
+        public int deliverBundleNum_flag_value()
+        {
+        	return deliverBundleNum_flag[0];
+        }
+        
+        public int[] deliverBundleNum_flag()
+        {
+        	return deliverBundleNum_flag;
+        }
+        
+        public int floodBundleNum_flag_value()
+        {
+        	return floodBundleNum_flag[0];
+        }
+        
+        public int[] floodBundleNum_flag()
+        {
+        	return floodBundleNum_flag;
+        }
+        
+        public int isFlooding_flag_value()
+        {
+        	return isFlooding_flag[0];
+        }
+        
+        public int[] isFlooding_flag()
+        {
+        	return isFlooding_flag;
+        }
+        
+        
+        //原有程序的数据读写
         public long version(){
         	return version;
         }
@@ -869,6 +1088,29 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
         
         block_len += SDNV.encoding_len(bundle.creation_ts().seconds());
         block_len += SDNV.encoding_len(bundle.creation_ts().seqno());
+        
+        //加入电子地图bundle数据发送时占用头部长度的检测
+       /* private long timestamp;
+    	private long invalidtime;//bundle的失效时间
+    	private int zeroArea;//0层区域，最底层区域，也是可达层区域
+    	private int firstArea;//1层区域，区域数字有小到大，依次范围扩大
+    	private int secondArea;//2层区域
+    	private int thirdArea;//3层区域
+    	
+    	private int deliverBundleNum;//传递阶段的bundle数量
+    	private int floodBundleNum;//洪泛扩散阶段bundle的数量
+    	private int isFlooding;//是否进入过了flood阶段
+*/        
+        block_len += SDNV.encoding_len(bundle.timestamp());
+        block_len += SDNV.encoding_len(bundle.invalidtime());
+        block_len += SDNV.encoding_len(bundle.zeroArea());
+        block_len += SDNV.encoding_len(bundle.firstArea());
+        block_len += SDNV.encoding_len(bundle.secondArea());
+        block_len += SDNV.encoding_len(bundle.thirdArea());
+        block_len += SDNV.encoding_len(bundle.deliverBundleNum());
+        block_len += SDNV.encoding_len(bundle.floodBundleNum());
+        block_len += SDNV.encoding_len(bundle.isFlooding());
+        
         block_len += SDNV.encoding_len(bundle.expiration());
         
         block_len += SDNV.encoding_len(primary.dictionary_length_value());
@@ -912,6 +1154,9 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
         primary.set_version(BundleProtocol.CURRENT_VERSION);
         primary.set_creation_time(bundle.creation_ts().seconds());
         primary.set_creation_sequence(bundle.creation_ts().seqno());
+        //加入bundle测试传输shuju
+//        primary.testString_lenngth[0]=2222l;
+        
         primary.set_lifetime(bundle.expiration());
         return primary_len;    	
     }

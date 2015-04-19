@@ -192,6 +192,11 @@ public class EndpointID implements Serializable {
 		uri_ =  URI.create(str);
 		return validate();
 	}
+	
+	public void setUritoSendMsg(String msg)
+	{
+		uri_=URI.create(msg);
+	}
 
 	/**
 	 * Set the string and validate it.

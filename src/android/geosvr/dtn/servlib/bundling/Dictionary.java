@@ -175,9 +175,9 @@ public class Dictionary implements Serializable {
 				if(j==find.length-1){
 					offset[0] = offset_temp;
 					return true;
-				} 
+				}
 			}
-		}    	
+		}
     	
 		offset[0] = offset_temp-1;
 		return false;
