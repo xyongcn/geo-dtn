@@ -192,56 +192,56 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
         			primary.invalidtime_flag_value()));
         	return -1;
         }
-        bundle.setTimestamp(primary.invalidtime_flag_value());
+        bundle.setInvalidtime(primary.invalidtime_flag_value());
         
         len -= read_sdnv(buf_block_content, primary.zeroArea_flag());
         if (primary.zeroArea_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
         			primary.zeroArea_flag_value()));
         	return -1;
         }
-        bundle.setTimestamp(primary.zeroArea_flag_value());
+        bundle.setZeroArea(primary.zeroArea_flag_value());
         
         len -= read_sdnv(buf_block_content, primary.firstArea_flag());
         if (primary.firstArea_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
         			primary.firstArea_flag_value()));
         	return -1;
         }
-        bundle.setTimestamp(primary.firstArea_flag_value());
+        bundle.setFirstArea(primary.firstArea_flag_value());
         
         len -= read_sdnv(buf_block_content, primary.secondArea_flag());
         if (primary.secondArea_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
         			primary.secondArea_flag_value()));
         	return -1;
         }
-        bundle.setTimestamp(primary.secondArea_flag_value());
+        bundle.setSecondArea(primary.secondArea_flag_value());
         
         len -= read_sdnv(buf_block_content, primary.thirdArea_flag());
         if (primary.thirdArea_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
         			primary.thirdArea_flag_value()));
         	return -1;
         }
-        bundle.setTimestamp(primary.thirdArea_flag_value());
+        bundle.setThirdArea(primary.thirdArea_flag_value());
         
         len -= read_sdnv(buf_block_content, primary.deliverBundleNum_flag());
         if (primary.deliverBundleNum_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
         			primary.deliverBundleNum_flag_value()));
         	return -1;
         }
-        bundle.setTimestamp(primary.deliverBundleNum_flag_value());
+        bundle.setDeliverBundleNum(primary.deliverBundleNum_flag_value());
         
         len -= read_sdnv(buf_block_content, primary.floodBundleNum_flag());
         if (primary.floodBundleNum_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
         			primary.floodBundleNum_flag_value()));
         	return -1;
         }
-        bundle.setTimestamp(primary.floodBundleNum_flag_value());
+        bundle.setFloodBundleNum(primary.floodBundleNum_flag_value());
         
         len -= read_sdnv(buf_block_content, primary.isFlooding_flag());
         if (primary.isFlooding_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
         			primary.isFlooding_flag_value()));
         	return -1;
         }
-        bundle.setTimestamp(primary.isFlooding_flag_value());
+        bundle.setIsFlooding(primary.isFlooding_flag_value());
         
         //原有的数据处理
         len -= read_sdnv(buf_block_content, primary.lifetime());

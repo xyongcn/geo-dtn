@@ -50,6 +50,7 @@ import android.geosvr.dtn.servlib.config.RoutesSetting.RouteEntry;
 import android.geosvr.dtn.servlib.contacts.ContactManager;
 import android.geosvr.dtn.servlib.contacts.Interface;
 import android.geosvr.dtn.servlib.contacts.Link;
+import android.geosvr.dtn.servlib.geohistorydtn.ReadConnectedMatrix;
 import android.geosvr.dtn.servlib.storage.BundleStore;
 import android.geosvr.dtn.servlib.storage.GlobalStorage;
 import android.geosvr.dtn.servlib.storage.RegistrationStore;
@@ -347,7 +348,7 @@ public class DTNManager extends Activity  {
 		}
 		
 		//初次加载启动服务
-		try {
+		/*try {
 			start_DTN_service();
 			start_DTN_service_UI_update();
 		} catch (FileNotFoundException e) {
@@ -359,8 +360,27 @@ public class DTNManager extends Activity  {
 		} catch (InvalidDTNConfigurationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 		
+		//测试读取DTN连通数据
+		try {
+			int[][] m=ReadConnectedMatrix.getMatrix(this);
+			for(int i=0;i<m.length;i++)
+			{
+				String s="";
+				for(int j=0;j<m[i].length;j++)
+				{
+					s+=m[i][j]+",";
+				}
+				Log.i("TEST",s);
+			}
+		} catch (NotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**

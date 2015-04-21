@@ -114,34 +114,33 @@ public class DTNConfigurationParser {
 	 */
 	public static DTNConfiguration parse_config_file(InputStream xml_stream, SharedPreferences myPrefs) throws InvalidDTNConfigurationException 
 	{
-		 DTNConfiguration config_ = new DTNConfiguration();
-		 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	       
-	        try {
-	            DocumentBuilder builder = factory.newDocumentBuilder();
-	            Document dom = builder.parse(xml_stream);
-	            Element DTNConfigurationElement = dom.getDocumentElement();
-	            
-	            if (DTNConfigurationElement.getTagName().equals(DTNConfigurationTagName))
-	            {
-	            	NodeList configurationNodes = DTNConfigurationElement.getChildNodes();
-	            	
-	            	for (int i=0; i < configurationNodes.getLength(); i++)
-	            	{
-	            		if (configurationNodes.item(i).getNodeType() == Node.ELEMENT_NODE)
-	            		{
-	            			process_config_element((Element) configurationNodes.item(i), config_, myPrefs);
-	            		}
-	            		
-	            	}
-	            }
-	            else throw new InvalidDTNConfigurationException("The expected DTNConfiguration is missing");
-	       
-	        } catch (Exception e) {
-	            throw new InvalidDTNConfigurationException(e.toString());
-	        } 
-	       
-		
+		DTNConfiguration config_ = new DTNConfiguration();
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+	   
+	    try {
+	        DocumentBuilder builder = factory.newDocumentBuilder();
+	        Document dom = builder.parse(xml_stream);
+	        Element DTNConfigurationElement = dom.getDocumentElement();
+	        
+	        if (DTNConfigurationElement.getTagName().equals(DTNConfigurationTagName))
+	        {
+	        	NodeList configurationNodes = DTNConfigurationElement.getChildNodes();
+	        	
+	        	for (int i=0; i < configurationNodes.getLength(); i++)
+	        	{
+	        		if (configurationNodes.item(i).getNodeType() == Node.ELEMENT_NODE)
+	        		{
+	        			process_config_element((Element) configurationNodes.item(i), config_, myPrefs);
+	        		}
+	        		
+	        	}
+	        }
+	        else throw new InvalidDTNConfigurationException("The expected DTNConfiguration is missing");
+
+		} catch (Exception e) {
+		    throw new InvalidDTNConfigurationException(e.toString());
+		}
+
 		return config_;
 		
 	}

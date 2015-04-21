@@ -1119,6 +1119,28 @@ public class DTNAPIBinder extends Binder implements DTNAPI {
 			dtn_bundle_id[i] = new DTNBundleID();
 			b[i] = new Bundle(location_t.DISK);
 			b[i] = dtn_send_multiple_final(handle, spec, dtn_payload, dtn_bundle_id[i], b[i]);
+			
+			//检测添加数据
+			/* private long timestamp;
+	    	private long invalidtime;//bundle的失效时间
+	    	private int zeroArea;//0层区域，最底层区域，也是可达层区域
+	    	private int firstArea;//1层区域，区域数字有小到大，依次范围扩大
+	    	private int secondArea;//2层区域
+	    	private int thirdArea;//3层区域
+	    	
+	    	private int deliverBundleNum;//传递阶段的bundle数量
+	    	private int floodBundleNum;//洪泛扩散阶段bundle的数量
+	    	private int isFlooding;//是否进入过了flood阶段
+	*/        
+			b[i].setTimestamp(11l);
+			b[i].setInvalidtime(22l);
+			b[i].setZeroArea(33);
+			b[i].setFirstArea(44);
+			b[i].setSecondArea(55);
+			b[i].setThirdArea(66);
+			b[i].setDeliverBundleNum(77);
+			b[i].setFloodBundleNum(88);
+			b[i].setIsFlooding(99);
 		}
 		
 		for (int i = 0; i < count; i++) {

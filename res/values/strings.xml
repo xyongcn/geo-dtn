@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    
+
    <!-- DTNConfiguration file name. This will be a file in application directory in phone memory --> 
    <string name="DTNConfigFilePath">dtn.config.xml</string>
    
@@ -46,6 +46,8 @@
    
    
    <string name="ReRouteTimeSec">20</string>
-	
+   
+   <!-- DTN算法中连通域的连通矩阵文件 -->
+	<string name="DtnConnectionMatrix">connectionmatrix.xml</string>
 
 </resources>
