@@ -19,7 +19,6 @@
  */
 package android.geosvr.dtn;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,20 +36,21 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources.NotFoundException;
-import android.geosvr.dtn.R;
 import android.geosvr.dtn.apps.DTNApps;
 import android.geosvr.dtn.servlib.config.DTNConfiguration;
 import android.geosvr.dtn.servlib.config.DTNConfigurationParser;
-import android.geosvr.dtn.servlib.config.InvalidDTNConfigurationException;
 import android.geosvr.dtn.servlib.config.DiscoveriesSetting.AnnounceEntry;
 import android.geosvr.dtn.servlib.config.DiscoveriesSetting.DiscoveryEntry;
 import android.geosvr.dtn.servlib.config.InterfacesSetting.InterfaceEntry;
+import android.geosvr.dtn.servlib.config.InvalidDTNConfigurationException;
 import android.geosvr.dtn.servlib.config.LinksSetting.LinkEntry;
 import android.geosvr.dtn.servlib.config.RoutesSetting.RouteEntry;
 import android.geosvr.dtn.servlib.contacts.ContactManager;
 import android.geosvr.dtn.servlib.contacts.Interface;
 import android.geosvr.dtn.servlib.contacts.Link;
-import android.geosvr.dtn.servlib.geohistorydtn.ReadConnectedMatrix;
+import android.geosvr.dtn.servlib.geohistorydtn.CurrentLocation;
+import android.geosvr.dtn.servlib.geohistorydtn.CurrentLocationFromScript;
+import android.geosvr.dtn.servlib.geohistorydtn.ReadGeoData;
 import android.geosvr.dtn.servlib.storage.BundleStore;
 import android.geosvr.dtn.servlib.storage.GlobalStorage;
 import android.geosvr.dtn.servlib.storage.RegistrationStore;
@@ -140,7 +140,7 @@ public class DTNManager extends Activity  {
 	/**
 	 * Reference object to NoActiveInterfacesLinksTextView according to DTNManager Layout
 	 */
-	private TextView NoActiveInterfacesLinksTextView;
+	private TextView CurrentLocationTextView;
 	
 	/**
 	 * Reference object to DTNConfigurationTextView according to DTNManager Layout
@@ -347,7 +347,7 @@ public class DTNManager extends Activity  {
 			wifiManager.setWifiEnabled(true);
 		}
 		
-		//初次加载启动服务
+		//启动程序时就开启DTN服务
 		/*try {
 			start_DTN_service();
 			start_DTN_service_UI_update();
@@ -364,16 +364,8 @@ public class DTNManager extends Activity  {
 		
 		//测试读取DTN连通数据
 		try {
-			int[][] m=ReadConnectedMatrix.getMatrix(this);
-			for(int i=0;i<m.length;i++)
-			{
-				String s="";
-				for(int j=0;j<m[i].length;j++)
-				{
-					s+=m[i][j]+",";
-				}
-				Log.i("TEST",s);
-			}
+			currentLocation=new CurrentLocationFromScript(this);
+			
 		} catch (NotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -439,10 +431,6 @@ public class DTNManager extends Activity  {
 		));
 		
 		
-		NoActiveInterfacesLinksTextView.setText(String.format(
-				"No. Active Interfaces / Links  : %s / %s", Interface.iface_counter(),
-				Link.link_counter()));
-		
 		if (DTNService.battery_stat() != null)
 		{
 			BatteryStatusTextView.setText(String.format("Battery Raw / Scale / Level / Status : %d / %d / %d / %s",
@@ -469,8 +457,8 @@ public class DTNManager extends Activity  {
 		NoBundlesRegistrationsTextView = (TextView) this
 				.findViewById(R.id.DTNManager_NoBundlesRegistrationsTextView);
 		NoBundlesUploadingDownloadingTextView = (TextView) this.findViewById(R.id.DTNManager_NoBundlesUploadingDownloadingTextView);
-		NoActiveInterfacesLinksTextView = (TextView) this
-				.findViewById(R.id.DTNManager_NoActiveInterfacesLinksTextView);
+		CurrentLocationTextView = (TextView) this
+				.findViewById(R.id.DTNManager_NoCurrentLocationTextView);
 		DTNConfigurationTextView = (TextView) this
 				.findViewById(R.id.DTNManager_DTNConfigurationTextView);
 		DTNConfigurationTextView.setEnabled(true);
@@ -1004,9 +992,6 @@ public class DTNManager extends Activity  {
 		NoBundlesUploadingDownloadingTextView.setText(String.format(
 				"No. Bundles Uploading / Downloading : %s / %s", "0", "0"));
 		
-		
-		NoActiveInterfacesLinksTextView.setText(String.format(
-				"No. Active Interfaces / Links  : %s / %s", "0", "0"));
 
 		StorageTypeQuotaTextView.setText(String.format(
 				"Storage Type / Quota : %s / %s", dtn_configuration
@@ -1111,8 +1096,6 @@ public class DTNManager extends Activity  {
 		
 		NoBundlesUploadingDownloadingTextView.setText("No. Bundles Uploading / Downloading : N/A");
 		BatteryStatusTextView.setText("Battery Raw / Scale / Level / Status : N/A / N/A / N/A / N/A");
-		NoActiveInterfacesLinksTextView
-				.setText("No. Active Interfaces / Links  : N/A");
 		StorageTypeQuotaTextView.setText("Storage Type / Quota : N/A");
 		StoragePathTextView.setText("Storage Path : N/A ");
 		InterfacesListTextView.setText(" N/A ");
@@ -1206,25 +1189,45 @@ public class DTNManager extends Activity  {
 	}
 	
 	/**
+	 * @author wwtao
+	 * 用来维护当前位置的线程
+	 */
+	public CurrentLocation currentLocation;
+	
+	
+	/**
 	 * 用来测试时在主界面上显示当前路由表的各个link
 	 * 
 	 */
 	public static int HANDLELINKUPDATE=0;
-	public Handler linkMsgUpdate=new Handler()
+	public static int LOCATIONCHANGED=1;//当前节点所在位置改变
+	public Handler TextViewUpdate=new Handler()
 	{
 		@Override
 		public void handleMessage(Message msg) {
 			// TODO Auto-generated method stub
-			Log.i("TEST","handle update link msg:receive msg");
 			if(msg.what==HANDLELINKUPDATE && LinksListTextView!=null)
 			{
+				String linkmsg="no data";
 				Bundle b=msg.getData();
-				String linkmsg=b.getString("linkmsg");
+				if(b!=null)
+					linkmsg=b.getString("linkmsg");
 				Log.i("TEST","handle update link msg:"+linkmsg);
 				LinksListTextView.setText(linkmsg);
 			}
 //			super.handleMessage(msg);
 			
+			//处理节点位置变化时的显示问题
+			if(msg.what==LOCATIONCHANGED && CurrentLocationTextView!=null)
+			{
+				String s="no data";
+				Bundle b=msg.getData();
+				if(b!=null)
+					s=b.getString("location");
+				
+				CurrentLocationTextView.setText("CurrentLocation  :"+s);
+//				Log.i("TEST",s);
+			}
 		}
 	};
 

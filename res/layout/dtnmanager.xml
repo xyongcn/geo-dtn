@@ -115,8 +115,8 @@
 			android:layout_marginBottom="5dip" android:layout_marginLeft="15dip"></TextView>	
 			
 
-		<TextView android:text="No. Active Interfaces / Links  : 1 / 2"
-			android:id="@+id/DTNManager_NoActiveInterfacesLinksTextView" android:visibility="gone"
+		<TextView android:text="CurrentLocation  : "
+			android:id="@+id/DTNManager_NoCurrentLocationTextView" 
 			android:layout_width="fill_parent" android:layout_height="fill_parent"
 			android:layout_marginLeft="15dip"></TextView>
 

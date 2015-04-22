@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import android.geosvr.dtn.DTNManager;
 import android.geosvr.dtn.servlib.bundling.BundleDaemon;
 import android.geosvr.dtn.servlib.naming.EndpointID;
 import android.geosvr.dtn.systemlib.util.IByteBuffer;
@@ -261,69 +262,86 @@ public class IPDiscovery extends Discovery implements Runnable {
 		Log.d(TAG, "discovery thread running");
 		IByteBuffer buf = new SerializableByteBuffer(1024);
 
+		//由于发送线程和接受线程不能在同一个线程中，将发送线程单独提取出来
+		(new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				IByteBuffer buf = new SerializableByteBuffer(1024);
+				// TODO Auto-generated method stub
+				while(true)
+				{
+					if(shutdown_)
+						break;
+					
+					/* Send section */
+					try 
+					{
+//						Log.i(TAG, "发送数据");
+						
+						int min_diff = INT_MAX;
+						Iterator<Announce> i = list_.iterator();
+
+						while (i.hasNext()) {
+							IPAnnounce announce = (IPAnnounce) i.next();
+
+							int remaining = announce.interval_remaining();
+
+							if (remaining == 0) {
+								try {
+									// Log.d(TAG, "announce ready for sending");
+									hdr = announce.format_advertisement(buf, 1024);
+
+									//有用么？
+									buf.put(hdr.cl_type());
+									buf.put(hdr.interval());
+									buf.putShort(hdr.length());
+									byte[] ip_address = new byte[] { 0, 0, 0, 0 };
+									buf.put(ip_address);
+									buf.putShort(hdr.inet_port());
+									buf.putShort(hdr.name_len());
+									byte[] name = hdr.sender_name().getBytes();
+									buf.put(name);
+									int areanum=0;
+
+									//加入同一区域的验证信息
+									buf.putInt(DTNManager.getInstance().currentLocation.getAreaNum());
+									
+									int l = hdr.length();
+									data = new byte[l];
+									int z;
+									for (z = 0; z < l; z++) {
+										data[z] = buf.get(z);
+									}
+
+									DatagramPacket pack = new DatagramPacket(data,
+											data.length, InetAddress
+													.getByName("192.168.1.255"),
+											port_);
+									socket_.send(pack);
+									min_diff = announce.interval();
+								} catch (Exception e) {
+									Log.e(TAG, "error sending the packet "
+											+ e.getMessage());
+								}
+							} else {
+								// Log.d(TAG, "Could not send discovery request");
+								if (remaining < min_diff) {
+									min_diff = announce.interval_remaining();
+								}
+							}
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+						Log.e(TAG, "发送部分错误"+e.toString());
+					}
+				}
+			}
+		})).start();
+		
 		while (true) {
 			if (shutdown_)
 				break;
-
-			/* Send section */
-			try 
-			{
-//				Log.i(TAG, "发送数据");
-				
-				int min_diff = INT_MAX;
-				Iterator<Announce> i = list_.iterator();
-
-				while (i.hasNext()) {
-					IPAnnounce announce = (IPAnnounce) i.next();
-
-					int remaining = announce.interval_remaining();
-
-					if (remaining == 0) {
-						try {
-							// Log.d(TAG, "announce ready for sending");
-							hdr = announce.format_advertisement(buf, 1024);
-
-							//有用么？
-							buf.put(hdr.cl_type());
-							buf.put(hdr.interval());
-							buf.putShort(hdr.length());
-							byte[] ip_address = new byte[] { 0, 0, 0, 0 };
-							buf.put(ip_address);
-							buf.putShort(hdr.inet_port());
-							buf.putShort(hdr.name_len());
-							byte[] name = hdr.sender_name().getBytes();
-							buf.put(name);
-
-							//可以在这儿加入验证信息
-							
-							int l = hdr.length();
-							data = new byte[l];
-							int z;
-							for (z = 0; z < l; z++) {
-								data[z] = buf.get(z);
-							}
-
-							DatagramPacket pack = new DatagramPacket(data,
-									data.length, InetAddress
-											.getByName("192.168.1.255"),
-									port_);
-							socket_.send(pack);
-							min_diff = announce.interval();
-						} catch (Exception e) {
-							Log.e(TAG, "error sending the packet "
-									+ e.getMessage());
-						}
-					} else {
-						// Log.d(TAG, "Could not send discovery request");
-						if (remaining < min_diff) {
-							min_diff = announce.interval_remaining();
-						}
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				Log.e(TAG, "发送部分错误"+e.toString());
-			}
 
 			/* receive section */
 			try {
@@ -366,6 +384,11 @@ public class IPDiscovery extends Discovery implements Runnable {
 				hdr.set_name_len(name_len);
 				byte[] name = new byte[name_len];
 				bb.get(name);
+				
+				//接受同一区域的验证信息
+				int areanum=bb.getInt();
+//				Log.i("TEST",String.valueOf(areanum));
+				
 				String sender_name = new String(name);
 				hdr.set_sender_name(sender_name);
 				remote_eid = new EndpointID(hdr.sender_name());
@@ -387,17 +410,21 @@ public class IPDiscovery extends Discovery implements Runnable {
 				Log.i(TAG, "nexthop="+nexthop);
 				Log.i(TAG, "remote_eid.uri="+remote_eid.uri());*/
 				
-				BundleDaemon BD = BundleDaemon.getInstance();
-				
-				//判断是否是本节点，如果是本节点则不作处理
-				if (remote_eid.equals(BD.local_eid())) {
-					// Log.d(TAG, "ignoring beacon from self" + remote_eid);
-				} else {
-					// distribute to all beacons registered for this CL type
-					handle_neighbor_discovered(Type, nexthop, remote_eid);
+				//用来判断是不是在同一个区域
+				if(areanum!=0 && areanum==DTNManager.getInstance().currentLocation.getAreaNum())
+				{
+					Log.i("TESTE",String.valueOf(areanum));
+					BundleDaemon BD = BundleDaemon.getInstance();
+					//判断是否是本节点，如果是本节点则不作处理
+					if (remote_eid.equals(BD.local_eid())) {
+						// Log.d(TAG, "ignoring beacon from self" + remote_eid);
+					} else {
+						// distribute to all beacons registered for this CL type
+						handle_neighbor_discovered(Type, nexthop, remote_eid);
+					}
 				}
-
-//				Log.d("B4", "beacon: "+remote_eid);
+				else
+					Log.i("TESTE","不在同一区域");
 
 			} catch (Exception e) {
 //				e.printStackTrace();

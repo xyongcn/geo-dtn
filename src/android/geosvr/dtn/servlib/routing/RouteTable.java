@@ -479,13 +479,13 @@ public class RouteTable{
     			s+="destIP:"+entry.link().remote_eid().toString()+"\n";
     			
     		}
-    		Log.i("TEST",s);
+//    		Log.i("TEST",s);
     		Message msg=new Message();
     		msg.what=DTNManager.HANDLELINKUPDATE;
     		Bundle b=new Bundle();
     		b.putString("linkmsg", s);
     		msg.setData(b);
-    		DTNManager.getInstance().linkMsgUpdate.sendMessage(msg);
+    		DTNManager.getInstance().TextViewUpdate.sendMessage(msg);
     	
 		}
 	};

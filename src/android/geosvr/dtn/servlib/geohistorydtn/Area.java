@@ -1,13 +1,17 @@
 package android.geosvr.dtn.servlib.geohistorydtn;
 
 /**
- * 作用:用来标识区域的对象
+ * 作用:用来区域的对象
  * @author wwtao
  *
  */
 public class Area 
 {
-	
+	//区域分层的
+	private int zeronum;
+	private int firstnum;
+	private int secondnum;
+	private int thirdnum;
 	
 	public Area()
 	{
