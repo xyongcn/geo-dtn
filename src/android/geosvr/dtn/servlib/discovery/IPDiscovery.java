@@ -292,6 +292,9 @@ public class IPDiscovery extends Discovery implements Runnable {
 									// Log.d(TAG, "announce ready for sending");
 									hdr = announce.format_advertisement(buf, 1024);
 
+									//buf的position重置为开始
+									buf.rewind();
+									
 									//有用么？
 									buf.put(hdr.cl_type());
 									buf.put(hdr.interval());
@@ -302,7 +305,6 @@ public class IPDiscovery extends Discovery implements Runnable {
 									buf.putShort(hdr.name_len());
 									byte[] name = hdr.sender_name().getBytes();
 									buf.put(name);
-									int areanum=0;
 
 									//加入同一区域的验证信息
 									buf.putInt(DTNManager.getInstance().currentLocation.getAreaNum());
@@ -387,7 +389,6 @@ public class IPDiscovery extends Discovery implements Runnable {
 				
 				//接受同一区域的验证信息
 				int areanum=bb.getInt();
-//				Log.i("TEST",String.valueOf(areanum));
 				
 				String sender_name = new String(name);
 				hdr.set_sender_name(sender_name);
@@ -410,16 +411,19 @@ public class IPDiscovery extends Discovery implements Runnable {
 				Log.i(TAG, "nexthop="+nexthop);
 				Log.i(TAG, "remote_eid.uri="+remote_eid.uri());*/
 				
+				Log.i("TESTE","receive from"+remote_eid.toString()+" areanum"+String.valueOf(areanum));
 				//用来判断是不是在同一个区域
 				if(areanum!=0 && areanum==DTNManager.getInstance().currentLocation.getAreaNum())
 				{
-					Log.i("TESTE",String.valueOf(areanum));
+					
 					BundleDaemon BD = BundleDaemon.getInstance();
 					//判断是否是本节点，如果是本节点则不作处理
 					if (remote_eid.equals(BD.local_eid())) {
 						// Log.d(TAG, "ignoring beacon from self" + remote_eid);
+						Log.i("TESTE","不在同一区域");
 					} else {
 						// distribute to all beacons registered for this CL type
+						Log.i("TESTE","正常通信");
 						handle_neighbor_discovered(Type, nexthop, remote_eid);
 					}
 				}
