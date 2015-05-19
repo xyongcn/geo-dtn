@@ -1,8 +1,8 @@
-package android.geosvr.dtn.servlib.geohistorydtn.area;
+package android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation;
 
 import java.util.HashMap;
 
-import android.geosvr.dtn.servlib.geohistorydtn.area.CurrentLocationFromScript.AreaDivision;
+import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocationFromScript.AreaDivision;
 
 /**
  * 用来获取当前区域以及变化的接口

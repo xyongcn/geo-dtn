@@ -1230,6 +1230,36 @@ public class Link implements Serializable {
 	public void set_retry_interval(int retry_interval) {
 		retry_interval_ = retry_interval;
 	}
+	
+	/**
+	 * link的失效时间
+	 */
+	private int invalid_interval=INVALID_INTERVAL;
+	private static int INVALID_INTERVAL=3;//默认的失效时间
+	public int get_invalid_interval()
+	{
+		return invalid_interval;
+	}
+	
+	//将失效时间减1
+	public void invalid_interval_minus1()
+	{
+		if(--invalid_interval<0)
+			invalid_interval=0;
+	}
+	
+	//设置link的失效时间
+	public void set_invalid_interval(int interval)	
+	{
+		invalid_interval=interval;
+	}
+	
+	//重置link的失效时间
+	public void reset_invalid_interval()
+	{
+		invalid_interval=INVALID_INTERVAL;
+	}
+	
 
 	/**
 	 * Accessor for the parameter class.

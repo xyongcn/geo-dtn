@@ -21,7 +21,10 @@ package android.geosvr.dtn.servlib.routing;
 import java.util.Iterator;
 
 import android.geosvr.dtn.DTNManager;
+import android.geosvr.dtn.DTNService;
+import android.geosvr.dtn.apps.DTNSelectArea;
 import android.geosvr.dtn.servlib.bundling.BundleDaemon;
+import android.geosvr.dtn.servlib.bundling.event.LinkDeleteRequest;
 import android.geosvr.dtn.servlib.contacts.Link;
 import android.geosvr.dtn.servlib.contacts.Link.state_t;
 import android.geosvr.dtn.servlib.naming.EndpointID;
@@ -52,8 +55,59 @@ public class RouteTable{
 			TAG  +=  router_name;
 			lock_ = new Lock();
 			route_table_ = new RouteEntryVec();
+			
+			checkLinkInvalid();
 		}
 
+		/**
+		 * 单独线程定时检测各个linker是否过期失效
+		 */
+		public void checkLinkInvalid()
+		{
+			(new Thread(new Runnable() {
+				
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					while(true)
+					{
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						//随服务一同退出
+						if(BundleDaemon.shutting_down())
+							break;
+						
+						Iterator<RouteEntry> iter = route_table_.iterator();
+						while (iter.hasNext())
+			    		{
+			    			RouteEntry e = iter.next();
+			    			Link thislink=e.link();
+			    			
+			    			if(thislink.get_invalid_interval()<=0)
+			    			{
+			    				Log.i(TAG,thislink.remote_eid().toString()+":删除该链接");
+			    				BundleDaemon.getInstance().post(new LinkDeleteRequest(thislink));
+			    				iter.remove();
+			    				
+			    			}
+			    			else
+			    			{
+			    				Log.i(TAG,thislink.remote_eid().toString()+":linker的失效时间:"+thislink.get_invalid_interval());
+			    				thislink.invalid_interval_minus1();
+			    			}
+			    		}
+						
+						//更新当前邻居表的显示
+						updateLinktoView();
+					}
+				}
+			})).start();
+		}
 	   
 	    /**
 	     * "Add a route entry." [DTN2]

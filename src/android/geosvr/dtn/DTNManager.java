@@ -37,6 +37,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources.NotFoundException;
 import android.geosvr.dtn.apps.DTNApps;
+import android.geosvr.dtn.apps.DTNSelectArea;
 import android.geosvr.dtn.servlib.config.DTNConfiguration;
 import android.geosvr.dtn.servlib.config.DTNConfigurationParser;
 import android.geosvr.dtn.servlib.config.DiscoveriesSetting.AnnounceEntry;
@@ -48,9 +49,9 @@ import android.geosvr.dtn.servlib.config.RoutesSetting.RouteEntry;
 import android.geosvr.dtn.servlib.contacts.ContactManager;
 import android.geosvr.dtn.servlib.contacts.Interface;
 import android.geosvr.dtn.servlib.contacts.Link;
-import android.geosvr.dtn.servlib.geohistorydtn.CurrentLocation;
-import android.geosvr.dtn.servlib.geohistorydtn.CurrentLocationFromScript;
-import android.geosvr.dtn.servlib.geohistorydtn.ReadGeoData;
+import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocation;
+import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocationFromScript;
+import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.ReadGeoData;
 import android.geosvr.dtn.servlib.storage.BundleStore;
 import android.geosvr.dtn.servlib.storage.GlobalStorage;
 import android.geosvr.dtn.servlib.storage.RegistrationStore;
@@ -106,6 +107,10 @@ public class DTNManager extends Activity  {
 	 * Reference object to reset storage according to DTNManager Layout 
 	 */
 	private Button resetStorageButton;
+	/**
+	 * 选择区域的button
+	 */
+	private Button selectArea;
 	/**
 	 * Reference to Outer object for the anonymous inner class
 	 */
@@ -750,6 +755,19 @@ public class DTNManager extends Activity  {
 			}
 		});
 
+		/**
+		 * 设置选择区域按钮的事件
+		 */
+		selectArea=(Button)findViewById(R.id.DTNManager_SelectAreaButton);
+		selectArea.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				Intent intent=new Intent(DTNManager.this,DTNSelectArea.class);
+				startActivity(intent);
+			}
+		});
 	}
 
 	/**

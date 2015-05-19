@@ -44,6 +44,8 @@ import android.geosvr.dtn.servlib.conv_layers.Netw_layerInteractor;
 import android.geosvr.dtn.servlib.conv_layers.TestDataLogger;
 import android.geosvr.dtn.servlib.discovery.DiscoveryTable;
 import android.geosvr.dtn.servlib.discovery.Location;
+import android.geosvr.dtn.servlib.discovery.PASVDiscovery;
+import android.geosvr.dtn.servlib.discovery.PASVExtraInfo;
 import android.geosvr.dtn.servlib.reg.RegistrationTable;
 import android.geosvr.dtn.servlib.routing.BundleRouter;
 import android.geosvr.dtn.servlib.routing.epidemic.queuing.EpidemicQueuing;
@@ -218,9 +220,46 @@ public class DTNService extends android.app.Service {
 	        	BundleDaemon.getInstance().init(config_);
 	        	init_datastore(config_);
 	        	
+	        	//基于aodv邻居获取
 	        	//应该是吴竞邦加的关于DTN断路的代码
-	        	//Netw_layerInteractor.getInstace().init();
-	        	//Location.getInstance().init();
+	        	/*Netw_layerInteractor.getInstace().init();
+	        	Location.getInstance().init();
+	        	//获取邻居进行输出
+	        	(new Thread(new Runnable() {
+					
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						Log.i("TESTED","开始aodv邻居检测");
+						int i=1;
+						while(true)
+						{
+							Log.i("TESTED","开始第"+(i++)+"次获取邻居");
+							HashMap<String, PASVExtraInfo> map=PASVDiscovery.getInstance().getPASVDiscoveriesList();
+							String s="";
+							if(map!=null)
+							{
+								for(PASVExtraInfo info:map.values())
+								{
+									s+="neighbour:"+info.getNexthop()+"\n";
+								}
+								Log.i("TESTED",s);
+							}
+							else
+							{
+								Log.i("TESTED","map is null");
+							}
+				
+							
+							try {
+								Thread.sleep(1000);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+				})).start();*/
 	    	}
 	    	catch(Exception e){
 	    		e.printStackTrace();

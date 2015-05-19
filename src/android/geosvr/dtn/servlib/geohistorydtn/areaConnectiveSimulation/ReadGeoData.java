@@ -1,4 +1,4 @@
-package android.geosvr.dtn.servlib.geohistorydtn.area;
+package android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation;
 
 import java.io.IOException;
 import java.io.InputStream;

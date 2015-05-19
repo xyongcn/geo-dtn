@@ -55,6 +55,7 @@
 			    android:layout_height="wrap_content"
 			    android:text="Quit" />
 			
+			
 		</LinearLayout>
 
 		<LinearLayout
@@ -89,6 +90,12 @@
 				</LinearLayout>
 				
 
+			<Button 
+			    android:id="@+id/DTNManager_SelectAreaButton"
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    android:text="SelectArea"
+			    />
 
 
 

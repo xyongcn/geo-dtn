@@ -294,6 +294,7 @@ public abstract class Discovery {
 					ContactEvent.reason_t.DISCOVERY));
 
 		}
+		//说明已有的该链接了
 		else {
 			assert (link != null);
 			if (!link.isNotUnavailable()) {
@@ -301,6 +302,8 @@ public abstract class Discovery {
 				link.set_nexthop(cl_addr);
 				link.lock().unlock();
 
+				link.reset_invalid_interval();
+				
 				BundleDaemon BD = BundleDaemon.getInstance();
 				// request to set link available
 				BD.post(new LinkStateChangeRequest(link, Link.state_t.AVAILABLE,

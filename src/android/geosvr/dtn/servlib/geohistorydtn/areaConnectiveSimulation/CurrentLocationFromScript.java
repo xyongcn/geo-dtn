@@ -1,4 +1,4 @@
-package android.geosvr.dtn.servlib.geohistorydtn.area;
+package android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -195,7 +195,7 @@ public class CurrentLocationFromScript implements CurrentLocation{
 		int firstArea=0;
 		int secondArea=0;
 		int thirdArea=0;*/
-		//区域分层的数组
+		//区域分层的数组，从0位置往后依次是上层到下层
 		int[] areaLayer=new int[4];
 		
 		private HashMap<Integer,AreaDivision> connectedMap=new HashMap<Integer, CurrentLocationFromScript.AreaDivision>();

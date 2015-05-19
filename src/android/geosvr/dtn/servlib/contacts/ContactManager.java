@@ -319,9 +319,9 @@ public class ContactManager extends BundleEventHandler {
 		}
 
 		links_.remove(link);
+		lock_.unlock();//解锁
 
 		if (wait) {
-			lock_.unlock();
 			// If some parent calling del_link already locked the Contact
 			// Manager,
 			// the lock will remain locked, and an event ahead of the

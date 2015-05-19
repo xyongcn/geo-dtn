@@ -420,7 +420,7 @@ public class IPDiscovery extends Discovery implements Runnable {
 					//判断是否是本节点，如果是本节点则不作处理
 					if (remote_eid.equals(BD.local_eid())) {
 						// Log.d(TAG, "ignoring beacon from self" + remote_eid);
-						Log.i("TESTE","不在同一区域");
+						Log.i("TESTE","这是本节点");
 					} else {
 						// distribute to all beacons registered for this CL type
 						Log.i("TESTE","正常通信");
