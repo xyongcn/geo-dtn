@@ -1,4 +1,7 @@
 package android.geosvr.dtn.servlib.geohistorydtn.frequencyVector;
+
+import android.geosvr.dtn.servlib.geohistorydtn.config.AttenuationConfig;
+
 /** 
  * @author wwtao thedevilking@qq.com: 
  * @version 创建时间：2015-5-5 上午11:37:50 
@@ -38,9 +41,10 @@ public abstract class FrequencyVector {
 	 */
 //	int 
 	
-	public FrequencyVector()
+	public FrequencyVector(int vectorLevel ,int serviceType)
 	{
-		
+		this.vectorLevel=vectorLevel;
+		this.serviceType=serviceType;
 	}
 	
 	/**
@@ -57,11 +61,22 @@ public abstract class FrequencyVector {
 	public abstract void changeVector();
 	
 	/**
-	 * 不管衰减
+	 * 衰减函数
 	 */
-	/*public void attenuationVector()
+	public void attenuationVector()
 	{
+		//衰减
+		double parameter=AttenuationConfig.getAttenuation(this.vectorLevel,this.serviceType);
+		for(int i=0;i<vector.length;i++)
+		{
+			vector[i]=vector[i]*parameter;
+		}
 		
-	}*/
+		//清楚修改标志位
+		for(int i=0;i<vectorChange.length;i++)
+		{
+			vectorChange[i]=false;
+		}
+	}
 	
 }

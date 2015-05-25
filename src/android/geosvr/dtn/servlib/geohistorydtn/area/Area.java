@@ -17,11 +17,21 @@ public class Area
 	/**
 	 * 该端时间内是否被修改过
 	 */
-	boolean hasChanged=false;
+//	boolean hasChanged=false;
+	/**
+	 * 区域的层次
+	 */
+	int level;
 	
-	public Area()
+	/**
+	 * 区域所在层次的id
+	 */
+	int id;
+	
+	public Area(int level,int id)
 	{
-		
+		this.level=level;
+		this.id=id;
 	}
 	
 	/**
@@ -42,6 +52,22 @@ public class Area
 	@Override
 	public boolean equals(Object o) {
 		// TODO Auto-generated method stub
-		return super.equals(o);
+//		return super.equals(o);
+		if(this.equals(o))
+			return true;
+		
+		if(o instanceof Area)
+		{
+			Area other=(Area)o;
+			if(other.level==this.level && other.id==this.id)
+				return true;
+			else
+				return false;
+		}
+		else
+			return false;
+		
 	}
+	
+	
 }

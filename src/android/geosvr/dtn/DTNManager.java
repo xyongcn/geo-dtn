@@ -52,6 +52,7 @@ import android.geosvr.dtn.servlib.contacts.Link;
 import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocation;
 import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocationFromScript;
 import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.ReadGeoData;
+import android.geosvr.dtn.servlib.geohistorydtn.timeManager.TimeManager;
 import android.geosvr.dtn.servlib.storage.BundleStore;
 import android.geosvr.dtn.servlib.storage.GlobalStorage;
 import android.geosvr.dtn.servlib.storage.RegistrationStore;
@@ -378,6 +379,9 @@ public class DTNManager extends Activity  {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		//测试时间管理器的作用
+		TimeManager tManager=TimeManager.getInstance();
 	}
 
 	/**

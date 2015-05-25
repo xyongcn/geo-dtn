@@ -13,7 +13,7 @@ public class AttenuationConfig {
 	 * @param vectorLevel：向量属于哪一种时间尺度
 	 * @return
 	 */
-	public static double getAttenuation(int serviceType,int vectorLevel)
+	public static double getAttenuation(int vectorLever,int serviceType)
 	{
 		return 0.9d;
 	}

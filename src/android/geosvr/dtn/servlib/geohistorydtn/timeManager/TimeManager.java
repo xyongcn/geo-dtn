@@ -1,6 +1,8 @@
 package android.geosvr.dtn.servlib.geohistorydtn.timeManager;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
@@ -21,6 +23,9 @@ public class TimeManager
 	
 	private boolean timeTaskRun=false;
 	
+	//事件格式化
+	SimpleDateFormat timeformat=new SimpleDateFormat("yyyy/MM/dd HH:mm:ss"); 
+	Date now;
 	
 	//计时器
 	private static Timer time=new Timer();
@@ -34,7 +39,18 @@ public class TimeManager
 	 */
 	private Calendar nextTime;
 	
-	//
+	private static class SingleTimeManager
+	{
+		static TimeManager instance=new TimeManager();
+	}
+	
+	public static TimeManager getInstance()
+	{
+		return SingleTimeManager.instance;
+	}
+	
+	
+	//构造函数
 	private TimeManager()	
 	{
 //		Locale local=Calendar.getInstance().
@@ -55,7 +71,15 @@ public class TimeManager
 		weekFVectorQueue=new LinkedBlockingDeque<FrequencyVector>();
 		monFVectorQueue=new LinkedBlockingDeque<FrequencyVector>();*/
 		
-		
+		//初次启用计时代码
+		timeTaskRun=true;
+		timeCount();
+	}
+	
+	public void destroy()
+	{
+		//关闭计时器的调用
+		timeTaskRun=false;
 	}
 	
 	/**
@@ -86,11 +110,7 @@ public class TimeManager
 	 */
 	public void addHourVectorListen(FrequencyVector hourVector)
 	{
-		//启动time计时器
-		if(hourFVectorQueue.size()==0)
-		{
-			
-		}
+		
 	}
 	
 	public void addWeekVetorListen(FrequencyVector weekVector)
@@ -103,22 +123,31 @@ public class TimeManager
 		
 	}
 	
+	//测试使用，获取打印当前事件
+	private String getTimeNow()
+	{
+		Date d=configTime.getTime();
+		now=Calendar.getInstance().getTime();
+		String time="路由算法中的时间："+timeformat.format(d)+"实际时间："+timeformat.format(now)+"  ";
+		return time;
+	}
+	
 	//每小时需要触发的操作
 	public void hourTask()	
 	{
-		
+		Log.i(tag,getTimeNow()+"\t触发小时操作");
 	}
 	
 	//每星期需要出发的操作
 	public void weekTask()	
 	{
-		
+		Log.i(tag,getTimeNow()+"\t触发周操作");
 	}
 	
 	//每月需要触发的操作
 	public void monthTask()
 	{
-		
+		Log.i(tag,getTimeNow()+"\t触发月操作");
 	}
 	
 	//每隔1分钟倒数计时一次，这样计时器的最小时间就是一分钟
@@ -137,11 +166,12 @@ public class TimeManager
 		//根据缩减倍率生成实际计时时间间隔
 		long n=interval/((long)FrequencyConfig.getInstance().getZoom());
 		
+		mTimerTask timeTask=new mTimerTask();
 		if(n>0)
-			time.schedule(TimeTask, n);
+			time.schedule(timeTask, n);
 		else
 		{
-			time.schedule(TimeTask, 0);
+			time.schedule(timeTask, 0);
 			Log.e(tag,"倒数计时器出现错误，计时事件为负");
 		}
 	}
@@ -153,7 +183,7 @@ public class TimeManager
 	 * @author wwtao
 	 *
 	 */
-	TimerTask TimeTask=new TimerTask() {
+	/*TimerTask TimeTask=new TimerTask() {
 		
 		int minNum=0;
 		int hourNum=0;
@@ -206,6 +236,7 @@ public class TimeManager
 				firstTime=false;
 			}
 			
+			//判断是否运行
 			if(timeTaskRun)
 			{
 				timeCount();
@@ -216,7 +247,81 @@ public class TimeManager
 				
 			}
 		}
-	};
+	};*/
+	
+	/**
+	 * 计时器相关的参数
+	 */
+	int minNum=0;
+	int hourNum=0;
+	int weekDayNum=0;
+	int monthDayNum=0;
+	
+	boolean firstTime=true;
+	/**
+	 * 复写timertask计时器
+	 */
+	private class mTimerTask extends TimerTask
+	{
+		
+		
+		//执行相应的任务
+		public void Task()
+		{
+			//小时级触发任务
+			int hourNow=configTime.get(Calendar.HOUR);
+			if(hourNum!=hourNow)
+			{
+				hourNum=hourNow;
+				//执行小时级触发的任务
+				hourTask();
+			}
+			
+			//星期级触发任务
+			int weekDayNow=configTime.get(Calendar.DAY_OF_WEEK);
+			if(weekDayNum!=weekDayNow)
+			{
+				weekDayNum=weekDayNow;
+				//对应星期级的任务触发
+				weekTask();
+			}
+			
+			//月级触发任务
+			int monthDayNow=configTime.get(Calendar.MONTH);
+			if(monthDayNum!=monthDayNow)
+			{
+				monthDayNum=monthDayNow;
+				//对应月级的任务触发
+				monthTask();
+			}
+		}
+		
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			if(firstTime)
+			{
+				minNum=nextTime.get(Calendar.MINUTE);
+				hourNum=nextTime.get(Calendar.HOUR);
+				weekDayNum=nextTime.get(Calendar.DAY_OF_WEEK);
+				monthDayNum=nextTime.get(Calendar.MONTH);
+				
+				firstTime=false;
+			}
+			
+			//判断是否运行
+			if(timeTaskRun)
+			{
+				timeCount();
+				Task();
+				this.cancel();
+			}
+			else
+			{
+				
+			}
+		}
+	}
 	
 	/**
 	 * 星期向量的time计时器

@@ -21,26 +21,22 @@ public class FrequencyConfig {
 	 */
 	private FrequencyConfig()
 	{
-		timeZoom=24;
+		timeZoom=60;
 //		Timer t=new Timer();
 		//获取当前的系统时间，已毫秒为单位
 		timeNow=Calendar.getInstance().getTimeInMillis();
 	}
 	
-	private static FrequencyConfig instance=null;
+//	private static FrequencyConfig instance=null;
+	
+	private static class SingleFrequencyConfig
+	{
+		static FrequencyConfig instance=new FrequencyConfig();
+	}
 	
 	public static FrequencyConfig getInstance()
 	{
-		if(instance==null)
-		{
-			synchronized (instance) {
-				if(instance==null)
-				{
-					instance=new FrequencyConfig();
-				}
-			}
-		}
-		return instance;
+		return SingleFrequencyConfig.instance;
 	}
 	
 	public int getZoom()
