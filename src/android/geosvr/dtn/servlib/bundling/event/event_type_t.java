@@ -124,7 +124,14 @@ public enum event_type_t {
 	CLA_PARAMS_QUERY("CLA_PARAMS_QUERY"), // /< Query CLA for config parameters
 	CLA_PARAMS_REPORT("CLA_PARAMS_REPORT"), // /< Report from CLA with config
 											// paramters
-
+	
+	/**
+	 * @author wwtao
+	 * geohistroy路由算法的添加的相关事件
+	 */
+	NEW_AREA_EVENT("NEW_AREA_EVENT"),
+	CHANGE_AREA_EVENT("CHANGE_AREA_EVENT"),
+	
 	;
 
 	private static final Map<event_type_t, String> captionLookup = new HashMap<event_type_t, String>();
