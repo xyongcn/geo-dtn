@@ -100,6 +100,7 @@ public class Area
 	/**
 	 * @author wwtao
 	 * 判断是不是同一个area，不只是通过对象引用比较，因为在不同区域间也是要进行比较的，所以应该有每个区域的标识
+	 * 
 	 */
 	@Override
 	public boolean equals(Object o) {

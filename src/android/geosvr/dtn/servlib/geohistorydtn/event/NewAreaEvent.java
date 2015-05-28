@@ -10,8 +10,8 @@ import android.geosvr.dtn.servlib.bundling.event.event_type_t;
  */
 public class NewAreaEvent extends BundleEvent{
 
-	public NewAreaEvent(event_type_t type) {
-		super(type);
+	public NewAreaEvent() {
+		super(event_type_t.NEW_AREA_EVENT);
 		// TODO Auto-generated constructor stub
 	}
 
