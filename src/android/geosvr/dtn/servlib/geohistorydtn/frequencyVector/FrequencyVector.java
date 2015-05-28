@@ -1,5 +1,6 @@
 package android.geosvr.dtn.servlib.geohistorydtn.frequencyVector;
 
+import android.geosvr.dtn.servlib.geohistorydtn.area.AreaInfo;
 import android.geosvr.dtn.servlib.geohistorydtn.config.AttenuationConfig;
 
 /** 
@@ -58,7 +59,7 @@ public abstract class FrequencyVector {
 	/**
 	 * 对当前时间段的向量进行处理
 	 */
-	public abstract void changeVector();
+	public abstract void changeVector(AreaInfo info);
 	
 	/**
 	 * 衰减函数

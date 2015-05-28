@@ -2,6 +2,7 @@ package android.geosvr.dtn.servlib.geohistorydtn.area;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVector;
@@ -49,26 +50,74 @@ public class Area
 	
 	/**
 	 * 子区域
+	 * 暂时不启用
 	 */
-	List<Area> childrenlist;
+//	List<Area> childrenlist;
 	
-	public Area(int level,int id,Area fatherArea,Collection<Area> childarea)
+	/*public Area(int level,int id,Area fatherArea,Collection<Area> childarea)
 	{
 		this.level=level;
 		this.id=id;
 		
 		this.fatherArea=fatherArea;
+		childrenlist=new LinkedList<Area>();
 		this.childrenlist.addAll(childarea);
 		
 		init();
+	}*/
+	
+	public Area(int level,int id,Area fatherArea)
+	{
+		this.level=level;
+		this.id=id;
+		
+		this.fatherArea=fatherArea;
+		
+		init();
 	}
+	
+	/**
+	 * 需要重新蛇者它的father
+	 * @param level
+	 * @param id
+	 */
+	public Area(int level,int id)
+	{
+		this.level=level;
+		this.id=id;
+		
+		this.fatherArea=null;
+		
+		init();
+	}
+	
+	/**
+	 * 添加子区域
+	 * @param area
+	 */
+	/*public void addChildArea(Area area)
+	{
+		this.childrenlist.add(area);
+	}*/
+	
+	/**
+	 * 删除子区域
+	 * 
+	 */
+	/*public void removeChildArea(Area area)
+	{
+		this.childrenlist.remove(area);
+	}*/
 	
 	private void init()	
 	{
 		vectorlist=new ArrayList<FrequencyVector>();
 		
 		/**
-		 * 加入频率向量
+		 * 加入频率向量，根据区域的层次建立相应的频率向量
+		 * 最底层区域只有hourVector
+		 * 次底层有hourVector、weekVector
+		 * 最顶层有hourVector、weekVector、monthVector
 		 */
 		int areatype=FrequencyVectorServiceType.AREA;
 		//创建基本的小时频率向量
@@ -86,16 +135,7 @@ public class Area
 		}
 	}
 	
-	/**
-	 * 用来判断是不是在该区域里面
-	 * @param longitude
-	 * @param latitude
-	 * @return
-	 */
-	public boolean isIntheArea(double longitude,double latitude)
-	{
-		return true;
-	}
+	
 	
 	/**
 	 * @author wwtao
@@ -122,5 +162,36 @@ public class Area
 		
 	}
 	
+	public int getAreaId()
+	{
+		return id;
+	}
 	
+	public int getAreaLevel()
+	{
+		return this.level;
+	}
+	
+	public Area getFatherArea()
+	{
+		return fatherArea;
+	}
+	
+	public void setFatherArea(Area area)
+	{
+		fatherArea=area;
+	}
+	
+	//对区域有关的频率向量改变相应的频率
+	public void changeFVector(AreaInfo info)
+	{
+		for(FrequencyVector vector:vectorlist)
+		{
+			vector.changeVector(info);
+		}
+		
+		//递归向上调用区域改变频率向量的函数
+		if(fatherArea!=null)
+			fatherArea.changeFVector(info);
+	}
 }

@@ -128,7 +128,8 @@ public class TimeManager
 	{
 		Date d=configTime.getTime();
 		now=Calendar.getInstance().getTime();
-		String time="路由算法中的时间："+timeformat.format(d)+"实际时间："+timeformat.format(now)+"  ";
+		String s="month:"+monthDayNum+" week:"+weekDayNum+" hour:"+hourNum+"  ";
+		String time=s+"路由算法中的时间："+timeformat.format(d)+"实际时间："+timeformat.format(now)+"  ";
 		return time;
 	}
 	
@@ -253,9 +254,24 @@ public class TimeManager
 	 * 计时器相关的参数
 	 */
 	int minNum=0;
-	int hourNum=0;
-	int weekDayNum=0;
-	int monthDayNum=0;
+	int hourNum=0;//当天的哪个时间
+	int weekDayNum=0;//属于周几
+	int monthDayNum=0;//当前月份
+	
+	public int getHourNum()
+	{
+		return hourNum;
+	}
+	
+	public int getWeekDayNum()
+	{
+		return weekDayNum;
+	}
+	
+	public int getMonthDayNum()
+	{
+		return monthDayNum;
+	}
 	
 	boolean firstTime=true;
 	/**
@@ -269,7 +285,7 @@ public class TimeManager
 		public void Task()
 		{
 			//小时级触发任务
-			int hourNow=configTime.get(Calendar.HOUR);
+			int hourNow=configTime.get(Calendar.HOUR_OF_DAY);
 			if(hourNum!=hourNow)
 			{
 				hourNum=hourNow;
@@ -302,7 +318,7 @@ public class TimeManager
 			if(firstTime)
 			{
 				minNum=nextTime.get(Calendar.MINUTE);
-				hourNum=nextTime.get(Calendar.HOUR);
+				hourNum=nextTime.get(Calendar.HOUR_OF_DAY);
 				weekDayNum=nextTime.get(Calendar.DAY_OF_WEEK);
 				monthDayNum=nextTime.get(Calendar.MONTH);
 				
@@ -323,51 +339,6 @@ public class TimeManager
 		}
 	}
 	
-	/**
-	 * 星期向量的time计时器
-	 * @author wwtao
-	 *
-	 */
-	/*TimerTask weekTimerTask=new TimerTask() {
-		
-		@Override
-		public void run() {
-			// TODO Auto-generated method stub
-			if(wTimeRun)
-			{
-				weekCount();
-				weekTask();
-			}
-		}
-	};*/
-	
-	/**
-	 * 月级别的time计时器
-	 * @author wwtao
-	 *
-	 */
-	/*TimerTask monTimerTask=new TimerTask() {
-		
-		@Override
-		public void run() {
-			// TODO Auto-generated method stub
-			if(mTimeRun)
-			{
-				monthCount();
-				monthTask();
-			}
-		}
-	};*/
-	
-	/*class TimeCount extends Thread
-	{
-		
-		@Override
-		public void run() {
-			// TODO Auto-generated method stub
-			super.run();
-		}
-	}*/
 	
 	/**
 	 * 相关常量
