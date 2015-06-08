@@ -5,9 +5,9 @@ package android.geosvr.dtn.servlib.geohistorydtn.frequencyVector;
  * 说明 :表示频率向量的级别
  */
 public class FrequencyVectorLevel {
-	public static int monthVector=1;
-	public static int weekVector=2;
-	public static int hourVector=3;
-	public static int halfhourVector=4;
+	public static final int monthVector=1;
+	public static final int weekVector=2;
+	public static final int hourVector=3;
+	public static final int halfhourVector=4;
 
 }

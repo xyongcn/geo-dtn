@@ -9,6 +9,11 @@ import java.util.Random;
 import android.content.Context;
 import android.content.res.Resources.NotFoundException;
 import android.geosvr.dtn.DTNManager;
+import android.geosvr.dtn.DTNService;
+import android.geosvr.dtn.servlib.bundling.BundleDaemon;
+import android.geosvr.dtn.servlib.geohistorydtn.area.AreaInfo;
+import android.geosvr.dtn.servlib.geohistorydtn.routing.GeoHistoryRouter;
+import android.geosvr.dtn.servlib.routing.BundleRouter;
 import android.os.Bundle;
 import android.os.Message;
 
@@ -106,6 +111,19 @@ public class CurrentLocationFromScript implements CurrentLocation{
 		{
 			currentArea=next;
 			sendTextViewUpdate();
+			
+			//通知区域改编的函数，触发区域变化的事件
+			AreaInfo areainfo=new AreaInfo(area.areaLayer);
+			//判断DTN服务是否在运行
+			if(DTNService.is_running())
+			{
+				BundleRouter router=BundleDaemon.getInstance().router();
+				if(router instanceof GeoHistoryRouter)
+				{
+					((GeoHistoryRouter)router).movetoArea(areainfo);
+				}
+			}
+			
 			return true;
 		}
 		else

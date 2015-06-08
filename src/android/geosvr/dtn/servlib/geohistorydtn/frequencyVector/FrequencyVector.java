@@ -37,10 +37,7 @@ public abstract class FrequencyVector {
 	 */
 	boolean[] vectorChange;
 	
-	/**
-	 * 触发计时事件类型
-	 */
-//	int 
+	
 	
 	public FrequencyVector(int vectorLevel ,int serviceType)
 	{
@@ -54,6 +51,14 @@ public abstract class FrequencyVector {
 	public double[] getVector()
 	{
 		return vector;
+	}
+	
+	/**
+	 * 获取向量等级
+	 */
+	public int getFrequencyLevel()
+	{
+		return vectorLevel;
 	}
 	
 	/**

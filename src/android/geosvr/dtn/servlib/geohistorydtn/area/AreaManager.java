@@ -43,7 +43,7 @@ public class AreaManager
 	/**
 	 * 检查这批新的区域并且修改相应的父类引用
 	 * @param areainfo:所在各个层次信息
-	 * @return :最底层的区域的引用
+	 * @return :最底层的区域的引用，如果区域信息不合法会返回Null
 	 */
 	public Area checkAreaInfo(AreaInfo areainfo)
 	{
@@ -78,7 +78,7 @@ public class AreaManager
 				break;
 			}
 			
-			
+			//将区域层级+1
 			++level;
 		}
 		

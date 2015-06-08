@@ -26,7 +26,7 @@ public class AreaInfo {
 	/**
 	 * 底层区域的对应的level
 	 */
-	int baseAreaLevel=1;
+	int baseAreaLevel=AreaLevel.FIRSTLEVEL;
 	
 	public AreaInfo(int[] areaId)
 	{

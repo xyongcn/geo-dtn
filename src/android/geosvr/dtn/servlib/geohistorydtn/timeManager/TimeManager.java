@@ -10,6 +10,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import android.geosvr.dtn.servlib.geohistorydtn.config.FrequencyConfig;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVector;
+import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorLevel;
 import android.util.Log;
 
 /** 
@@ -105,10 +106,56 @@ public class TimeManager
 	BlockingQueue<FrequencyVector> monFVectorQueue;
 	
 	/**
-	 * 添加时间向量
-	 * @param hourVector
+	 * 添加频率向量到计时队列
+	 * @param vector:频率向量
 	 */
-	public void addHourVectorListen(FrequencyVector hourVector)
+	public void addVectorListen(FrequencyVector vector)
+	{
+		if(vector==null)
+			return;
+		
+		switch(vector.getFrequencyLevel())
+		{
+		case FrequencyVectorLevel.hourVector:
+			hourFVectorQueue.add(vector);
+			break;
+			
+		case FrequencyVectorLevel.weekVector:
+			weekFVectorQueue.add(vector);
+			break;
+			
+		case FrequencyVectorLevel.monthVector:
+			monFVectorQueue.add(vector);
+			break;
+		}
+	}
+	
+	/**
+	 * 移除计时队列的频率向量
+	 * @param vector：频率向量
+	 */
+	public void removeVectorListen(FrequencyVector vector)
+	{
+		if(vector==null)
+			return;
+		
+		switch(vector.getFrequencyLevel())
+		{
+		case FrequencyVectorLevel.hourVector:
+			hourFVectorQueue.remove(vector);
+			break;
+			
+		case FrequencyVectorLevel.weekVector:
+			weekFVectorQueue.remove(vector);
+			break;
+			
+		case FrequencyVectorLevel.monthVector:
+			monFVectorQueue.remove(vector);
+			break;
+		}
+	}
+	
+	/*public void addHourVectorListen(FrequencyVector hourVector)
 	{
 		
 	}
@@ -121,7 +168,7 @@ public class TimeManager
 	public void addMonVectorListen(FrequencyVector monVector)
 	{
 		
-	}
+	}*/
 	
 	//测试使用，获取打印当前事件
 	private String getTimeNow()
@@ -176,79 +223,6 @@ public class TimeManager
 			Log.e(tag,"倒数计时器出现错误，计时事件为负");
 		}
 	}
-	
-	
-	//time计时器
-	/**
-	 * 小时向量的time计时器,这是计时的基本单位
-	 * @author wwtao
-	 *
-	 */
-	/*TimerTask TimeTask=new TimerTask() {
-		
-		int minNum=0;
-		int hourNum=0;
-		int weekDayNum=0;
-		int monthDayNum=0;
-		
-		boolean firstTime=true;
-		
-		//执行相应的任务
-		public void Task()
-		{
-			//小时级触发任务
-			int hourNow=configTime.get(Calendar.HOUR);
-			if(hourNum!=hourNow)
-			{
-				hourNum=hourNow;
-				//执行小时级触发的任务
-				hourTask();
-			}
-			
-			//星期级触发任务
-			int weekDayNow=configTime.get(Calendar.DAY_OF_WEEK);
-			if(weekDayNum!=weekDayNow)
-			{
-				weekDayNum=weekDayNow;
-				//对应星期级的任务触发
-				weekTask();
-			}
-			
-			//月级触发任务
-			int monthDayNow=configTime.get(Calendar.DAY_OF_MONTH);
-			if(monthDayNum!=monthDayNow)
-			{
-				monthDayNum=monthDayNow;
-				//对应月级的任务触发
-				monthTask();
-			}
-		}
-		
-		@Override
-		public void run() {
-			// TODO Auto-generated method stub
-			if(firstTime)
-			{
-				minNum=nextTime.get(Calendar.MINUTE);
-				hourNum=nextTime.get(Calendar.HOUR);
-				weekDayNum=nextTime.get(Calendar.DAY_OF_WEEK);
-				monthDayNum=nextTime.get(Calendar.MONTH);
-				
-				firstTime=false;
-			}
-			
-			//判断是否运行
-			if(timeTaskRun)
-			{
-				timeCount();
-				Task();
-			}
-			else
-			{
-				
-			}
-		}
-	};*/
 	
 	/**
 	 * 计时器相关的参数

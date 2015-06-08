@@ -9,6 +9,7 @@ import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVector;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorLevel;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorManager;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorServiceType;
+import android.geosvr.dtn.servlib.geohistorydtn.timeManager.TimeManager;
 
 /**
  * 作用:用来描述区域的对象
@@ -25,9 +26,10 @@ public class Area
 	
 	
 	/**
-	 * 该端时间内是否被修改过
+	 * 该区域是否是是当前所在区域
 	 */
-//	boolean hasChanged=false;
+	boolean isCurrent=false;
+	
 	/**
 	 * 区域的层次
 	 */
@@ -77,7 +79,7 @@ public class Area
 	}
 	
 	/**
-	 * 需要重新蛇者它的father
+	 * 需要重新实现它的father
 	 * @param level
 	 * @param id
 	 */
@@ -180,6 +182,55 @@ public class Area
 	public void setFatherArea(Area area)
 	{
 		fatherArea=area;
+	}
+	
+	/**
+	 * 设置区域为当前所在区域
+	 */
+	public void setCurrent()
+	{
+		isCurrent=true;
+	}
+	
+	/**
+	 * 获取该区域是否是当前所在区域
+	 * @return
+	 */
+	public boolean isCurrent()	
+	{
+		return isCurrent;
+	}
+	
+	/**
+	 * 将该区域设置为非当前区域
+	 */
+	public void cancleCurrent()
+	{
+		isCurrent=false;
+	}
+	
+	/**
+	 * 将本区域的频率向量加入到计时器队列
+	 */
+	public void addTimeCount()
+	{
+		setCurrent();
+		for(FrequencyVector vector:vectorlist)
+		{
+			TimeManager.getInstance().addVectorListen(vector);
+		}
+	}
+	
+	/**
+	 * 将本区域的频率向量移除计时器队列
+	 */
+	public void removeTimeCount()
+	{
+		cancleCurrent();
+		for(FrequencyVector vector:vectorlist)
+		{
+			TimeManager.getInstance().removeVectorListen(vector);
+		}
 	}
 	
 	//对区域有关的频率向量改变相应的频率
