@@ -22,6 +22,8 @@ public class CurrentLocationFromScript implements CurrentLocation{
 	private static String TAG="CurrentLocationFromScript"; 
 	private static CurrentLocationFromScript instance=null;
 	
+	private static GeoHistoryRouter testrouter=null;
+	
 	//线程安全单例
 	/*public static CurrentLocationFromScript getInstance()
 	{
@@ -114,6 +116,7 @@ public class CurrentLocationFromScript implements CurrentLocation{
 			
 			//通知区域改编的函数，触发区域变化的事件
 			AreaInfo areainfo=new AreaInfo(area.areaLayer);
+			
 			//判断DTN服务是否在运行
 			if(DTNService.is_running())
 			{
@@ -123,6 +126,13 @@ public class CurrentLocationFromScript implements CurrentLocation{
 					((GeoHistoryRouter)router).movetoArea(areainfo);
 				}
 			}
+			/*else
+			{
+				//测试使用
+				if(testrouter==null)
+					testrouter=new GeoHistoryRouter();
+				testrouter.movetoArea(areainfo);
+			}*/
 			
 			return true;
 		}

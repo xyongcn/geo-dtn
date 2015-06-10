@@ -85,4 +85,17 @@ public abstract class FrequencyVector {
 		}
 	}
 	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		String s=String.valueOf(vector[0]);
+		
+		for(int i=1;i<vector.length;i++)
+		{
+			s+=":"+vector[i];
+		}
+		
+		return s;
+//		return super.toString();
+	}
 }

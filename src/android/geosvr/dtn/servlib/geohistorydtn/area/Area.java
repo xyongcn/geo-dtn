@@ -245,4 +245,31 @@ public class Area
 		if(fatherArea!=null)
 			fatherArea.changeFVector(info);
 	}
+	
+	@Override
+	public String toString() {
+		String s="";
+		s+=String.format("level and id:%s#%d,", level,id);
+		
+		for(FrequencyVector vector:vectorlist)
+		{
+			switch(vector.getFrequencyLevel())
+			{
+			case FrequencyVectorLevel.hourVector:
+				s+=String.format("hourVector:(%s),", vector.toString());
+				break;
+				
+			case FrequencyVectorLevel.weekVector:
+				s+=String.format("weekVector:(%s),", vector.toString());
+				break;
+				
+			case FrequencyVectorLevel.monthVector:
+				s+=String.format("monthVector:(%s),", vector.toString());
+				break;
+			}
+		}
+		
+		return s;
+//		return super.toString();
+	}
 }

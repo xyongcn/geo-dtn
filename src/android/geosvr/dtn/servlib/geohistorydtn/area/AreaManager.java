@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import android.util.Log;
+
 /** 
  * @author wwtao thedevilking@qq.com: 
  * @version 创建时间：2015-5-14 上午9:16:09 
@@ -11,6 +13,8 @@ import java.util.List;
  */
 public class AreaManager 
 {
+	private static String tag="AreaManager";
+	
 	private static class SingleAreaManager
 	{
 		static AreaManager instance=new AreaManager();
@@ -67,6 +71,8 @@ public class AreaManager
 				{
 					a=new Area(level, id);
 					areaMap.put(s, a);
+					
+					Log.i(tag,"add new area:"+a.toString());
 				}
 				
 				arealist.add(a);
