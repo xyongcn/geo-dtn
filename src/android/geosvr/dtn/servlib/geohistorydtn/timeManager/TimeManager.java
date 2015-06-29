@@ -8,9 +8,11 @@ import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import android.geosvr.dtn.servlib.geohistorydtn.area.AreaManager;
 import android.geosvr.dtn.servlib.geohistorydtn.config.FrequencyConfig;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVector;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorLevel;
+import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorManager;
 import android.util.Log;
 
 /** 
@@ -180,22 +182,67 @@ public class TimeManager
 		return time;
 	}
 	
+	/**
+	 * 测试使用，获取简单的时间，用来输出到日志上
+	 * @return
+	 */
+	private String getSimplifyTime()
+	{
+		Date d=configTime.getTime();
+		String s="time changed:"+timeformat.format(d)+"\n";
+		return s;
+	}
+	
 	//每小时需要触发的操作
 	public void hourTask()	
 	{
+		//日志输出及提示信息
 		Log.i(tag,getTimeNow()+"\t触发小时操作");
+		AreaManager.writeAreaTimeChange2Log(getSimplifyTime());
+		
+		for(FrequencyVector vector:hourFVectorQueue)
+		{
+			vector.changeVector();
+		}
+		
+		//对所有的需要小时衰减的向量进行
+		FrequencyVectorManager.getInstance().hourAttenuation();
+		
+		//将历史区域向量记录到文件中
+		AreaManager.getInstance().wrieteAreaInfoToFile();
 	}
 	
 	//每星期需要出发的操作
 	public void weekTask()	
 	{
+		//日志输出及提示信息
 		Log.i(tag,getTimeNow()+"\t触发周操作");
+		AreaManager.writeAreaTimeChange2Log(getSimplifyTime());
+		
+		for(FrequencyVector vector:weekFVectorQueue)
+		{
+			vector.changeVector();
+		}
+		
+		//对所有的需要小时衰减的向量进行
+		FrequencyVectorManager.getInstance().weekAttenuation();
+		
 	}
 	
 	//每月需要触发的操作
 	public void monthTask()
 	{
+		//日志输出及提示信息
 		Log.i(tag,getTimeNow()+"\t触发月操作");
+		AreaManager.writeAreaTimeChange2Log(getSimplifyTime());
+		
+		for(FrequencyVector vector:monFVectorQueue)
+		{
+			vector.changeVector();
+		}
+		
+		//对所有的需要小时衰减的向量进行
+		FrequencyVectorManager.getInstance().monthAttenuation();
 	}
 	
 	//每隔1分钟倒数计时一次，这样计时器的最小时间就是一分钟

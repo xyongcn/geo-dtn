@@ -24,10 +24,15 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import android.geosvr.dtn.DTNManager;
@@ -267,6 +272,38 @@ public class IPDiscovery extends Discovery implements Runnable {
 			
 			@Override
 			public void run() {
+				
+				//自动生成本网段的广播地址
+				NetworkInterface netInterface;
+				InetAddress broadcastAddr=null;
+				try {
+
+					broadcastAddr=InetAddress.getByName("255.255.255.255");
+//					Log.i(TAG,"广播地址"+broadcastAddr.getHostAddress());
+					netInterface = NetworkInterface.getByName("adhoc0");
+					
+					if (!netInterface.isLoopback() && netInterface.isUp()) 
+				    {
+				      List<InterfaceAddress> interfaceAddresses = netInterface.getInterfaceAddresses();
+				      Log.i(TAG,"adhoc0网口接口数目："+String.valueOf(interfaceAddresses.size()));
+				      for (InterfaceAddress interfaceAddress : interfaceAddresses) {
+				        if (interfaceAddress.getBroadcast() != null) {
+				        	Log.i(TAG,"广播地址"+interfaceAddress.getBroadcast().getHostAddress());// 输出广播地址
+				        	Log.i(TAG,"子网掩码长度："+interfaceAddress.getNetworkPrefixLength());// 输出子网掩码长度，24表示掩码255.255.255.0
+				        	broadcastAddr=interfaceAddress.getBroadcast();
+				        }
+				      }
+				    }
+					
+//					Log.i(TAG,"广播地址"+interfaceAddresses.get(0).getBroadcast().getHostAddress());
+				} catch (SocketException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 				IByteBuffer buf = new SerializableByteBuffer(1024);
 				// TODO Auto-generated method stub
 				while(true)
@@ -317,9 +354,7 @@ public class IPDiscovery extends Discovery implements Runnable {
 									}
 
 									DatagramPacket pack = new DatagramPacket(data,
-											data.length, InetAddress
-													.getByName("192.168.1.255"),
-											port_);
+											data.length, broadcastAddr,port_);
 									socket_.send(pack);
 									min_diff = announce.interval();
 								} catch (Exception e) {
@@ -411,7 +446,7 @@ public class IPDiscovery extends Discovery implements Runnable {
 				Log.i(TAG, "nexthop="+nexthop);
 				Log.i(TAG, "remote_eid.uri="+remote_eid.uri());*/
 				
-				Log.i("TESTE","receive from"+remote_eid.toString()+" areanum"+String.valueOf(areanum));
+				Log.v("TESTE","receive from"+remote_eid.toString()+" areanum"+String.valueOf(areanum));
 				//用来判断是不是在同一个区域
 				if(areanum!=0 && areanum==DTNManager.getInstance().currentLocation.getAreaNum())
 				{
@@ -420,15 +455,17 @@ public class IPDiscovery extends Discovery implements Runnable {
 					//判断是否是本节点，如果是本节点则不作处理
 					if (remote_eid.equals(BD.local_eid())) {
 						// Log.d(TAG, "ignoring beacon from self" + remote_eid);
-						Log.i("TESTE","这是本节点");
+//						Log.i("TESTE","这是本节点");
 					} else {
 						// distribute to all beacons registered for this CL type
-						Log.i("TESTE","正常通信");
+//						Log.i("TESTE","正常通信");
 						handle_neighbor_discovered(Type, nexthop, remote_eid);
 					}
 				}
 				else
-					Log.i("TESTE","不在同一区域");
+				{
+//					Log.i("TESTE","不在同一区域");
+				}
 
 			} catch (Exception e) {
 //				e.printStackTrace();

@@ -1234,7 +1234,7 @@ public class DTNManager extends Activity  {
 				Bundle b=msg.getData();
 				if(b!=null)
 					linkmsg=b.getString("linkmsg");
-				Log.i("TEST","handle update link msg:"+linkmsg);
+//				Log.i("TEST","handle update link msg:"+linkmsg);
 				LinksListTextView.setText(linkmsg);
 			}
 //			super.handleMessage(msg);

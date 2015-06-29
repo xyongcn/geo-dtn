@@ -1,5 +1,6 @@
 package android.geosvr.dtn.servlib.geohistorydtn.area;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -16,7 +17,7 @@ import android.geosvr.dtn.servlib.geohistorydtn.timeManager.TimeManager;
  * @author wwtao
  *
  */
-public class Area 
+public class Area implements Serializable
 {
 	//区域分层的
 	/*private int zeronum;
@@ -25,6 +26,11 @@ public class Area
 	private int thirdnum;*/
 	
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 111L;
+
 	/**
 	 * 该区域是否是是当前所在区域
 	 */
@@ -148,7 +154,7 @@ public class Area
 	public boolean equals(Object o) {
 		// TODO Auto-generated method stub
 //		return super.equals(o);
-		if(this.equals(o))
+		if(this==o)
 			return true;
 		
 		if(o instanceof Area)
@@ -268,7 +274,7 @@ public class Area
 				break;
 			}
 		}
-		
+		s+="\n";
 		return s;
 //		return super.toString();
 	}

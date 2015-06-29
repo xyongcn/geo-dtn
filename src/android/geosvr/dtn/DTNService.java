@@ -19,7 +19,9 @@
  */
 package android.geosvr.dtn;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -29,6 +31,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.geosvr.dtn.R;
 import android.geosvr.dtn.applib.DTNAPIBinder;
+import android.geosvr.dtn.applib.DTNAPICode.dtn_api_status_report_code;
+import android.geosvr.dtn.applib.DTNAPICode.dtn_bundle_payload_location_t;
+import android.geosvr.dtn.applib.types.DTNBundlePayload;
+import android.geosvr.dtn.applib.types.DTNBundleSpec;
+import android.geosvr.dtn.applib.types.DTNEndpointID;
+import android.geosvr.dtn.applib.types.DTNHandle;
+import android.geosvr.dtn.apps.DTNAPIFailException;
+import android.geosvr.dtn.apps.DTNOpenFailException;
+import android.geosvr.dtn.apps.DTNSend;
 import android.geosvr.dtn.servlib.bundling.BundleDaemon;
 import android.geosvr.dtn.servlib.bundling.event.ShutdownRequest;
 import android.geosvr.dtn.servlib.common.ServlibEventData;
@@ -395,6 +406,67 @@ public class DTNService extends android.app.Service {
 			return DTNConfiguration.default_dtn_config();
 		
 		return config_;
+	}
+	
+	
+	//用来由其他程序调用进行bundle的发送
+	public boolean sendMessage(String dest_eid,File file,boolean rctp) throws UnsupportedEncodingException, DTNOpenFailException, DTNAPIFailException
+	{
+		if(!is_running())
+			return false;
+		
+		double dest_longitude = -1.0;
+		double dest_latitude = -1.0;
+		
+		DTNBundlePayload dtn_payload = new DTNBundlePayload(dtn_bundle_payload_location_t.DTN_PAYLOAD_FILE);
+		
+		if(file==null)
+			return false;
+		else
+			dtn_payload.set_file(file);//用指定的文件进行发送
+//			dtn_payload.set_file(new File("/sdcard/test_0.5M.mp3"));
+		   
+		// Start the DTN Communication
+		DTNHandle dtn_handle = new DTNHandle();
+		dtn_api_status_report_code open_status = dtn_api_binder_.dtn_open(dtn_handle);
+		if (open_status != dtn_api_status_report_code.DTN_SUCCESS) throw new DTNOpenFailException();
+		try
+		{
+			DTNBundleSpec spec = new DTNBundleSpec();
+			
+			// set destination from the user input
+			spec.set_dest(new DTNEndpointID(dest_eid));
+			spec.setDestLongitude(dest_longitude);
+			spec.setDestLatitude(dest_latitude);
+			// set the source EID from the bundle Daemon
+			spec.set_source(new DTNEndpointID(BundleDaemon.getInstance().local_eid().toString()));
+				
+			// Set expiration in seconds, default to 1 hour
+			spec.set_expiration(DTNSend.EXPIRATION_TIME);
+			// no option processing for now
+			if(rctp)//rctp为true表示执行的是带回复的bundle
+				spec.set_dopts(2);
+			else
+				spec.set_dopts(DTNSend.DELIVERY_OPTIONS);
+			// Set prority
+			spec.set_priority(DTNSend.PRIORITY);
+			
+			dtn_api_status_report_code api_send_result ;
+
+			api_send_result = dtn_api_binder_
+						.dtn_multiple_send(dtn_handle, spec, dtn_payload, 1);
+			// If the API fail to execute throw the exception so user interface can catch and notify users
+			if (api_send_result != dtn_api_status_report_code.DTN_SUCCESS) {
+				throw new DTNAPIFailException();
+			}
+		
+		}
+		finally
+		{
+			dtn_api_binder_.dtn_close(dtn_handle);
+		}
+		
+		return true;
 	}
 
 };

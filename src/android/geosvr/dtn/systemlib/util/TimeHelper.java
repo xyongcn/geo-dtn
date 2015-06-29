@@ -19,10 +19,12 @@
  */
 package android.geosvr.dtn.systemlib.util;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 import android.geosvr.dtn.servlib.bundling.DTNTime;
+import android.util.Log;
 
 
 
@@ -48,6 +50,9 @@ public class TimeHelper {
 	public static long current_seconds_from_ref()
 	{
 		long t1 = Calendar.getInstance().getTimeInMillis()/1000;
+		/*SimpleDateFormat timeformat=new SimpleDateFormat("yyyy/MM/dd HH:mm:ss"); 
+		Log.e("time",timeformat.format(new Date(t1*1000l)));
+		Log.e("time",timeformat.format(Calendar.getInstance().getTime()));*/
 		long t2 = DTNTime.TIMEVAL_CONVERSION;
 		return t1 - t2;
 	}

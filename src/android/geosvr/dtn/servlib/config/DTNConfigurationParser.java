@@ -341,6 +341,11 @@ public class DTNConfigurationParser {
 			Log.i("Bytewalla4", String.format("Router Type: %s",router_type.getValue()));
 			config.routes_setting().set_router_type(router_type_t.EPIDEMIC_BUNDLE_ROUTER);
 		}
+		else if (router_type.getValue().equals("geohistory"))
+		{
+			Log.i("Bytewalla4", String.format("Router Type: %s",router_type.getValue()));
+			config.routes_setting().set_router_type(router_type_t.GEOHISTORY_BUNDLE_ROUTER);
+		}
 		else
 		{
 			throw new InvalidDTNConfigurationException(String.format("Invalid DTN Config Exception: Router Type, %s is invalid",router_type.getValue()));

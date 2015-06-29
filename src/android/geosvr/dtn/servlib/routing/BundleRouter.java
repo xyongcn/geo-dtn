@@ -34,6 +34,7 @@ import android.geosvr.dtn.servlib.bundling.ForwardingInfo;
 import android.geosvr.dtn.servlib.bundling.event.BundleEvent;
 import android.geosvr.dtn.servlib.config.DTNConfiguration;
 import android.geosvr.dtn.servlib.contacts.Link;
+import android.geosvr.dtn.servlib.geohistorydtn.routing.GeoHistoryRouter;
 import android.geosvr.dtn.servlib.naming.EndpointID;
 import android.geosvr.dtn.servlib.routing.epidemic.EpidemicBundle;
 import android.geosvr.dtn.servlib.routing.epidemic.EpidemicBundleRouter;
@@ -69,7 +70,8 @@ public abstract class BundleRouter extends BundleEventHandler {
 
 		STATIC_BUNDLE_ROUTER("static", (byte) 0x00),
 		PROPHET_BUNDLE_ROUTER("prophet", (byte) 0x01),
-		EPIDEMIC_BUNDLE_ROUTER("epidemic", (byte) 0x02);
+		EPIDEMIC_BUNDLE_ROUTER("epidemic", (byte) 0x02),
+		GEOHISTORY_BUNDLE_ROUTER("geohistory",(byte)0x03);
 
 		private static final Map<Byte, router_type_t> lookup = new HashMap<Byte, router_type_t>();
 		private static final Map<String, router_type_t> caption_map = new HashMap<String, router_type_t>();
@@ -145,6 +147,10 @@ public abstract class BundleRouter extends BundleEventHandler {
 		else if (type == router_type_t.EPIDEMIC_BUNDLE_ROUTER) {
 			router = new EpidemicBundleRouter();
 			BundleRouter.name_ = "epidemic bundle router";
+		}
+		else if (type == router_type_t.GEOHISTORY_BUNDLE_ROUTER) {
+			router = new GeoHistoryRouter();
+			BundleRouter.name_ = "geohistory bundle router";
 		}
 		else {
 			Log.e(TAG, String.format("Unknow router Type %s with code %d", type

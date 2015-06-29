@@ -1,15 +1,26 @@
 package android.geosvr.dtn.servlib.geohistorydtn.routing;
 
+import java.io.File;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import android.geosvr.dtn.servlib.bundling.BundleDaemon;
+import android.geosvr.dtn.servlib.bundling.ForwardingInfo;
 import android.geosvr.dtn.servlib.bundling.event.BundleEvent;
 import android.geosvr.dtn.servlib.bundling.event.BundleReceivedEvent;
+import android.geosvr.dtn.servlib.bundling.event.ContactDownEvent;
 import android.geosvr.dtn.servlib.bundling.event.ContactUpEvent;
+import android.geosvr.dtn.servlib.bundling.event.LinkCreatedEvent;
+import android.geosvr.dtn.servlib.contacts.Link;
 import android.geosvr.dtn.servlib.geohistorydtn.area.Area;
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaInfo;
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaManager;
+import android.geosvr.dtn.servlib.geohistorydtn.neighbour.Neighbour;
+import android.geosvr.dtn.servlib.geohistorydtn.neighbour.NeighbourManager;
+import android.geosvr.dtn.servlib.naming.EndpointID;
+import android.geosvr.dtn.servlib.naming.EndpointIDPattern;
+import android.geosvr.dtn.servlib.routing.RouteEntry;
+import android.geosvr.dtn.servlib.routing.RouteEntryVec;
 import android.geosvr.dtn.servlib.routing.TableBasedRouter;
 import android.util.Log;
 
@@ -31,6 +42,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	
 	private void init()	
 	{
+		Log.i(tag,"starts GeoHistoryRouter");
+		
 		areaInfoList=new LinkedBlockingDeque<AreaInfo>();
 		
 		(new Thread(this)).start();
@@ -54,23 +67,95 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	@Override
 	protected void handle_bundle_received(BundleReceivedEvent event) {
 		// TODO Auto-generated method stub
-		super.handle_bundle_received(event);
+		
+		/**
+		 * DTN中的时间，bundle的creation_ts为bundle创建的相对时间，DTNTime.TIMEVAL_CONVERSION就是相对的参数，应该是2000，00：00。
+		 * 利用creation_ts和DTNTime.TIMEVAL_CONVERSION即可得到bundle创建时的真实时间
+		 * bundle的expirionTime则是指bundle的有效时间
+		 */
+		
+		
+		switch(event.source())
+		{
+		//收到邻居发来的相关信息
+		case EVENTSRC_NEIGHBOUR:
+			
+			break;
+			
+		default:
+			super.handle_bundle_received(event);
+		}
+		
+		
 	}
 
+	@Override
+	protected void handle_link_created(LinkCreatedEvent event) {
+//		super.handle_link_created(event);
+		Link link = event.link();
+		assert(link != null): "TableBasedRouter: handle_link_created: link is null";
+	    assert(!link.isdeleted()): "TableBasedRouter: handle_link_available: link is deleted";
+
+	    link.set_router_info(new DeferredList(link));
+	                          
+	 // "If we're configured to do so, create a route entry for the eid
+ 		// specified by the link when it connected, using the
+ 		// scheme-specific code to transform the URI to wildcard
+ 		// the service part" [DTN2]
+ 		EndpointID eid = link.remote_eid();
+ 		if (config_.add_nexthop_routes() && !eid.equals(EndpointID.NULL_EID())) {
+ 			EndpointIDPattern eid_pattern = new EndpointIDPattern(link.remote_eid());
+
+ 			// "attempt to build a route pattern from link's remote_eid" [DTN2]
+ 			if (!eid_pattern.append_service_wildcard())
+ 				// "else assign remote_eid as-is" [DTN2]
+ 				eid_pattern.assign(link.remote_eid());
+
+ 			RouteEntryVec ignored = new RouteEntryVec();
+ 			if (route_table_.get_matching(eid_pattern, link, ignored) == 0) {
+ 				RouteEntry entry = new RouteEntry(eid_pattern, link);
+ 				entry.set_action(ForwardingInfo.action_t.COPY_ACTION);
+// 				add_route(entry);//这里面有对所有的bundle进行重新路由的过程
+ 				route_table_.add_entry(entry);
+ 			}
+ 		}
+	}
+	
 	/**
 	 * 针对新邻居发现的事件处理
 	 */
 	@Override
 	protected void handle_contact_up(ContactUpEvent event) {
 		// TODO Auto-generated method stub
-//		super.handle_contact_up(event);
+//		super.handle_contact_up(event);//无用
 		
+		//获取eid
+		Link link=event.contact().link();
+		EndpointID eid=link.remote_eid();
 //		a)	触发对已有邻居信息的保存
+		Neighbour nei=NeighbourManager.getInstance().checkNeighbour(eid);
 		
 //		b)	触发邻居之间交换信息的bundle发送
 		
-//		c)	触发已有bundle队列里面的所有bundle的route事件（会尝试判断是否发送这些bundle）。
+		
+//		c)	触发已有bundle队列里面的所有bundle的route事件（会尝试判断是否发送这些bundle）;这个事件应该在收到邻居相应的bundle信息后
 
+	}
+	
+	@Override
+	protected void handle_contact_down(ContactDownEvent event) {
+		// TODO Auto-generated method stub
+		super.handle_contact_down(event);
+		
+		//移除该邻居频率的计时器
+		Link link=event.contact().link();
+		EndpointID eid=link.remote_eid();
+		if(eid!=null)
+		{
+			Neighbour nei=NeighbourManager.getInstance().getNeighbour(eid);
+			if(nei!=null)
+				nei.removeTimeCount();
+		}
 	}
 
 	/**
@@ -176,13 +261,16 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 					if(newBaseArea!=null)
 					{
 						//变动相应的频率向量,因为每次计时到了就开始改变FVector，所以在变更区域的时候不需要进行变动频率向量
-//						newBaseArea.changeFVector(ainfo);
+						newBaseArea.changeFVector(ainfo);
 						
 						//加入到新的倒数时间列表里面,将原来的从倒数计时里面去掉
 						changeAreaTimeCount(baseArea, newBaseArea);
 						
 						//更改当前的底层区域向量
 						baseArea=newBaseArea;
+						
+						//将移动的记录保存到日志中
+						AreaManager.writeAreaLogToFile("move to new area, ",baseArea);
 					}
 				}
 				
@@ -200,6 +288,25 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	 */
 	private void changeAreaTimeCount(Area oldarea,Area newarea)
 	{
+		//递归的结束条件
+		if(newarea==null)
+			return;
+		
+		//旧区域为空的变更计时器
+		if(oldarea==null)
+		{
+			Log.i(tag,String.format("首次加载新区域的频率香料到计时器中（新区域：%d#%d）"
+					,newarea.getAreaLevel(),newarea.getAreaId()));
+			newarea.addTimeCount();
+			changeAreaTimeCount(null,newarea.getFatherArea());
+			
+			Log.i(tag,"进入新区域的频率向量:"+newarea.toString());
+			return ;
+		}
+		
+		/**
+		 * 正常情况的变更计时器
+		 */
 		if(!oldarea.equals(newarea) && oldarea.getAreaLevel()==newarea.getAreaLevel())
 		{
 			Log.d(tag,String.format("变动计时器中新旧区域的频率向量（旧区域：%d#%d 新区域：%d#%d）"
@@ -207,9 +314,17 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			oldarea.removeTimeCount();
 			newarea.addTimeCount();
 			changeAreaTimeCount(oldarea.getFatherArea(),newarea.getFatherArea());
+			
+			Log.i(tag,"原先区域的频率向量:"+oldarea.toString());
+			Log.i(tag,"当前区域的频率向量:"+newarea.toString());
 		}
 		else
-			Log.i(tag,String.format("新旧区域为同一层的同一个区域，变动相应的区域频率向量计时停止（旧区域：%d#%d 新区域：%d#%d）"
+			Log.d(tag,String.format("新旧区域为同一层的同一个区域，变动相应的区域频率向量计时停止（旧区域：%d#%d 新区域：%d#%d）"
 					, oldarea.getAreaLevel(),oldarea.getAreaId(),newarea.getAreaLevel(),newarea.getAreaId()));
+	}
+
+	private void sendBundle(EndpointID eid,File file)
+	{
+		
 	}
 }

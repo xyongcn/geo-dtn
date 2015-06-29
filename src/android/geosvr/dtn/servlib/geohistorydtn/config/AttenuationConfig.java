@@ -1,4 +1,7 @@
 package android.geosvr.dtn.servlib.geohistorydtn.config;
+
+import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorLevel;
+
 /** 
  * @author wwtao thedevilking@qq.com: 
  * @version 创建时间：2015-5-19 下午12:44:16 
@@ -15,6 +18,20 @@ public class AttenuationConfig {
 	 */
 	public static double getAttenuation(int vectorLever,int serviceType)
 	{
+		switch(vectorLever)
+		{
+		case FrequencyVectorLevel.hourVector:
+			return 0.99d;
+//			break;
+			
+		case FrequencyVectorLevel.weekVector:
+			return 0.9d;
+//			break;
+			
+		case FrequencyVectorLevel.monthVector:
+			return 0.95d;
+//			break;
+		}
 		return 0.9d;
 	}
 

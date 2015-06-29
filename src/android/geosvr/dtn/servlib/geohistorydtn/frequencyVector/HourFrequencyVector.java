@@ -1,17 +1,24 @@
 package android.geosvr.dtn.servlib.geohistorydtn.frequencyVector;
 
+import java.io.Serializable;
+
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaInfo;
 import android.geosvr.dtn.servlib.geohistorydtn.timeManager.TimeManager;
 
-public class HourFrequencyVector extends FrequencyVector 
+public class HourFrequencyVector extends FrequencyVector implements Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-	
-	public HourFrequencyVector(int vectorLevel, int serviceType) {
+	HourFrequencyVector(int vectorLevel, int serviceType) {
 		super(FrequencyVectorLevel.hourVector, serviceType);
+		
+		init();
 	}
 	
-	public void init()	
+	void init()	
 	{
 		this.vector=new double[24];
 		this.vectorChange=new boolean[24];
@@ -35,6 +42,23 @@ public class HourFrequencyVector extends FrequencyVector
 			{
 				//对该向量加1
 				++vector[hour];
+				vectorChange[hour]=true;
+			}
+		}
+	}
+
+	@Override
+	public void changeVector() {
+		// TODO Auto-generated method stub
+		
+		int hour=TimeManager.getInstance().getHourNum();
+		if(hour>=0 && hour<24)
+		{
+			if(!vectorChange[hour])
+			{
+				//对该向量加1
+				++vector[hour];
+				vectorChange[hour]=true;
 			}
 		}
 	}

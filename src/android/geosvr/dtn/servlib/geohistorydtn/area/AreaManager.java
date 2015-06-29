@@ -1,5 +1,12 @@
 package android.geosvr.dtn.servlib.geohistorydtn.area;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +44,40 @@ public class AreaManager
 	private void init()	
 	{
 		areaMap=new HashMap<String, Area>(500);
+		
+		//从文件中读取历史的区域信息
+		try
+		{
+			File file=new File("/sdcard/geoHistory_dtn/historyarea");
+			if(file.exists())
+			{
+				Log.i(tag,"从文件historyarea中读取历史的区域信息");
+				ObjectInputStream in=new ObjectInputStream(new FileInputStream(file));
+				Object obj=null;
+				while((obj=in.readObject())!=null)
+				{
+					if(obj instanceof Area)
+					{
+						Area area=(Area)obj;
+						String s=area.level+"#"+area.id;
+						areaMap.put(s, area);
+					}
+				}
+				in.close();
+			}
+			/*for(Area area:areaMap.values())
+			{
+				out.writeObject(area);
+			}
+			out.close();*/
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -72,7 +113,7 @@ public class AreaManager
 					a=new Area(level, id);
 					areaMap.put(s, a);
 					
-					Log.i(tag,"add new area:"+a.toString());
+//					Log.i(tag,"add new area:"+a.toString());
 				}
 				
 				arealist.add(a);
@@ -101,6 +142,99 @@ public class AreaManager
 			return null;
 	}
 	
+	//将内存中的area相关信息写到sdcard中
+//	FileOutputStream geohistoryarea=null;
+	public void wrieteAreaInfoToFile()
+	{
+		(new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try
+				{
+					File file=new File("/sdcard/geoHistory_dtn/historyarea");
+					file.getParentFile().mkdirs();
+					if(!file.exists())
+						file.createNewFile();
+					
+					ObjectOutputStream out=new ObjectOutputStream(new FileOutputStream(file, false));
+					for(Area area:areaMap.values())
+					{
+						out.writeObject(area);
+					}
+					out.flush();
+					out.close();
+				}
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+
+			}
+		})).start();
+		
+	}
+	
+	//将移动轨迹的area保存到log中
+	static BufferedOutputStream areamovingLog=null;
+	/**
+	 * 将移动轨迹的area保存到log中
+	 * @param reason 原因前缀
+	 * @param area 新移动的区域
+	 */
+	public static void writeAreaLogToFile(String reason,Area area)
+	{
+		try
+		{
+			if(areamovingLog==null)
+			{
+				File file=new File("/sdcard/dtn_test_data/areamoving.log");
+				file.getParentFile().mkdir();
+				if(!file.exists())
+					file.createNewFile();
+				
+				areamovingLog=new BufferedOutputStream(new FileOutputStream(file, false));
+			}
+			String temp;
+			if(area!=null)
+				temp=reason +area.toString();
+			else
+				temp=reason+"null";
+			areamovingLog.write(temp.getBytes());
+			areamovingLog.flush();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * 计时器时间发生变化将写入日志中
+	 * @param time
+	 */
+	public static void writeAreaTimeChange2Log(String time)
+	{
+		try
+		{
+			if(areamovingLog==null)
+			{
+				File file=new File("/sdcard/dtn_test_data/areamoving.log");
+				file.getParentFile().mkdir();
+				if(!file.exists())
+					file.createNewFile();
+				
+				areamovingLog=new BufferedOutputStream(new FileOutputStream(file, false));
+			}
+			
+			areamovingLog.write(time.getBytes());
+			areamovingLog.flush();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
 	
 	//获取位置以及改变位置的流程
 	//1.首先由专门获取位置的程序负责获取当前的位置，然后再通过相关程序得到相应的区域编号；一种模拟环境中是直接得到相应的区域编号。

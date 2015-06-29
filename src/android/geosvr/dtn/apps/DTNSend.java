@@ -101,17 +101,17 @@ public class DTNSend extends Activity  {
 	/**
 	 * Default expiration time in seconds, set to 1 hour
 	 */
-	private static final int EXPIRATION_TIME = 1*60*60;
+	public static final int EXPIRATION_TIME = 1*60*60;
 	
 	/**
 	 * Set delivery options to don't flag at all
 	 */
-	private static final int DELIVERY_OPTIONS = 0;
+	public static final int DELIVERY_OPTIONS = 0;
 	
 	/**
 	 * Set priority to normal sending
 	 */
-	private static final dtn_bundle_priority_t PRIORITY = dtn_bundle_priority_t.COS_NORMAL;
+	public static final dtn_bundle_priority_t PRIORITY = dtn_bundle_priority_t.COS_NORMAL;
 	 
 	/**
 	 * The service connection to communicate with DTNService 

@@ -1,5 +1,7 @@
 package android.geosvr.dtn.servlib.geohistorydtn.frequencyVector;
 
+import java.io.Serializable;
+
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaInfo;
 import android.geosvr.dtn.servlib.geohistorydtn.config.AttenuationConfig;
 
@@ -8,7 +10,12 @@ import android.geosvr.dtn.servlib.geohistorydtn.config.AttenuationConfig;
  * @version 创建时间：2015-5-5 上午11:37:50 
  * 说明 ：时间区域频率向量的基类
  */
-public abstract class FrequencyVector {
+public abstract class FrequencyVector implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 11L;
 
 	/**
 	 * @author wwtao
@@ -39,7 +46,7 @@ public abstract class FrequencyVector {
 	
 	
 	
-	public FrequencyVector(int vectorLevel ,int serviceType)
+	FrequencyVector(int vectorLevel ,int serviceType)
 	{
 		this.vectorLevel=vectorLevel;
 		this.serviceType=serviceType;
@@ -62,9 +69,14 @@ public abstract class FrequencyVector {
 	}
 	
 	/**
-	 * 对当前时间段的向量进行处理
+	 * 对更换区域时，处理当前时间段的向量进行处理
 	 */
 	public abstract void changeVector(AreaInfo info);
+	
+	/**
+	 * 对到达计时时间后，处理当前时间段的向量
+	 */
+	public abstract void changeVector();
 	
 	/**
 	 * 衰减函数
