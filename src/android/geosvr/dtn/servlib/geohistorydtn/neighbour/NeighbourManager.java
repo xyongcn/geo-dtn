@@ -1,7 +1,7 @@
 package android.geosvr.dtn.servlib.geohistorydtn.neighbour;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Stack;
 
 import android.geosvr.dtn.servlib.geohistorydtn.config.NeibhourConfig;
 import android.geosvr.dtn.servlib.naming.EndpointID;
@@ -10,6 +10,8 @@ import android.geosvr.dtn.servlib.naming.EndpointID;
  * @author wwtao thedevilking@qq.com: 
  * @version 创建时间：2015-6-22 下午3:10:12 
  * 说明  ：作为邻居类的管理器
+ * 
+ * 尚未完成：没有将当前邻居的频率向量加入到计时器中
  */
 public class NeighbourManager {
 	
@@ -54,6 +56,7 @@ public class NeighbourManager {
 			nei=new Neighbour(eid);
 			neighbourlist.put(eid.toString(), nei);
 		}
+		//更改频率向量
 		nei.checkVectorChange();
 		return nei;
 	}
@@ -68,4 +71,13 @@ public class NeighbourManager {
 		else
 			return null;
 	}
+	
+	public Collection<Neighbour> getAllNeighbour()
+	{
+		return neighbourlist.values();
+	}
+	
+	/**
+	 * 需要对邻居进行排序，对部分邻居获取区域信息
+	 */
 }

@@ -180,19 +180,19 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
      	private int floodBundleNum;//洪泛扩散阶段bundle的数量
      	private int isFlooding;//是否进入过了flood阶段
  */        
-        len -= read_sdnv(buf_block_content, primary.timestamp_flag());
+        /*len -= read_sdnv(buf_block_content, primary.timestamp_flag());
         if (primary.timestamp_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
         			primary.timestamp_flag_value()));
         	return -1;
         }
-        bundle.setTimestamp(primary.timestamp_flag_value());
+        bundle.setTimestamp(primary.timestamp_flag_value());*/
         
-        len -= read_sdnv(buf_block_content, primary.invalidtime_flag());
+        /*len -= read_sdnv(buf_block_content, primary.invalidtime_flag());
         if (primary.invalidtime_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
         			primary.invalidtime_flag_value()));
         	return -1;
         }
-        bundle.setInvalidtime(primary.invalidtime_flag_value());
+        bundle.setInvalidtime(primary.invalidtime_flag_value());*/
         
         len -= read_sdnv(buf_block_content, primary.zeroArea_flag());
         if (primary.zeroArea_flag_value() > Integer.MAX_VALUE) {	Log.e(TAG, String.format("timestamp is too large: %s",
@@ -586,8 +586,8 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
      	private int floodBundleNum;//洪泛扩散阶段bundle的数量
      	private int isFlooding;//是否进入过了flood阶段
  */      
-        len -= write_sdnv(bundle.timestamp(),buf);
-        len -= write_sdnv(bundle.invalidtime(),buf);
+//        len -= write_sdnv(bundle.timestamp(),buf);
+//        len -= write_sdnv(bundle.invalidtime(),buf);
         len -= write_sdnv(bundle.zeroArea(),buf);
         len -= write_sdnv(bundle.firstArea(),buf);
         len -= write_sdnv(bundle.secondArea(),buf);
@@ -1101,8 +1101,8 @@ public class PrimaryBlockProcessor extends BlockProcessor implements Serializabl
     	private int floodBundleNum;//洪泛扩散阶段bundle的数量
     	private int isFlooding;//是否进入过了flood阶段
 */        
-        block_len += SDNV.encoding_len(bundle.timestamp());
-        block_len += SDNV.encoding_len(bundle.invalidtime());
+//        block_len += SDNV.encoding_len(bundle.timestamp());
+//        block_len += SDNV.encoding_len(bundle.invalidtime());
         block_len += SDNV.encoding_len(bundle.zeroArea());
         block_len += SDNV.encoding_len(bundle.firstArea());
         block_len += SDNV.encoding_len(bundle.secondArea());

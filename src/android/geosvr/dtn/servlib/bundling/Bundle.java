@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import android.content.IntentSender.SendIntentException;
 import android.geosvr.dtn.servlib.bundling.exception.BundleLockNotHeldByCurrentThread;
 import android.geosvr.dtn.servlib.naming.EndpointID;
 import android.geosvr.dtn.servlib.storage.BundleStore;
@@ -38,7 +39,7 @@ import android.util.Log;
  * @author Rerngvit Yanggratoke (rerngvit@kth.se)
  */
 
-public class Bundle implements Serializable {
+public class Bundle implements Serializable,Cloneable {
 
 	/**
 	 * String TAG for using with Android Logging system
@@ -73,7 +74,7 @@ public class Bundle implements Serializable {
 
 	}
 
-
+	
 	/**
 	 * Copy the metadata from one bundle to another (used in fragmentation).
 	 */
@@ -1189,18 +1190,18 @@ public class Bundle implements Serializable {
 	/*
 	public long test=1111;*/
 	//添加电子地图DTN算法的必要属性
-	private long timestamp;
-	private long invalidtime;//bundle的失效时间
-	private int zeroArea;//0层区域，最底层区域，也是可达层区域
-	private int firstArea;//1层区域，区域数字有小到大，依次范围扩大
-	private int secondArea;//2层区域
-	private int thirdArea;//3层区域
+//	private long timestamp;
+//	private long invalidtime;//bundle的失效时间
+	private int zeroArea=0;//0层区域，最底层区域，也是可达层区域
+	private int firstArea=0;//1层区域，区域数字有小到大，依次范围扩大
+	private int secondArea=0;//2层区域
+	private int thirdArea=0;//3层区域
 	
-	private int deliverBundleNum;//传递阶段的bundle数量
-	private int floodBundleNum;//洪泛扩散阶段bundle的数量
-	private int isFlooding;//是否进入过了flood阶段
+	private int deliverBundleNum=0;//传递阶段的bundle数量
+	private int floodBundleNum=0;//洪泛扩散阶段bundle的数量
+	private int isFlooding=0;//是否进入了flood阶段
 	
-	public long timestamp()
+	/*public long timestamp()
 	{
 		return timestamp;
 	}
@@ -1218,7 +1219,7 @@ public class Bundle implements Serializable {
 	public void setInvalidtime(long invalidtime)
 	{
 		this.invalidtime=invalidtime;
-	}
+	}*/
 	
 	public int zeroArea()
 	{
@@ -1288,5 +1289,37 @@ public class Bundle implements Serializable {
 	public void setIsFlooding(int isflooding)
 	{
 		this.isFlooding=isflooding;
+	}
+	
+	/**
+	 * 对GeoDTN所添加的头部信息的非法判断
+	 * @return true表示这个bundle的GeoHistory信息时合法的；false表示这个bundle的GeoHistory头部信息时非法的
+	 */
+	public boolean isGeoHistoryDtnValide()
+	{
+		/**
+		 * 	private int zeroArea=0;//0层区域，最底层区域，也是可达层区域
+			private int firstArea=0;//1层区域，区域数字有小到大，依次范围扩大
+			private int secondArea=0;//2层区域
+			private int thirdArea=0;//3层区域
+			
+			private int deliverBundleNum=0;//传递阶段的bundle数量
+			private int floodBundleNum=0;//洪泛扩散阶段bundle的数量
+			private int isFlooding=0;//是否进入了flood阶段
+		 */
+		if(zeroArea==0 && firstArea==0 && secondArea==0 && thirdArea==0 && deliverBundleNum==0
+				&& floodBundleNum==0 && isFlooding==0)
+		{
+			return false;
+		}
+		else
+			return true;
+	}
+	
+	//用来复制拷贝bundle
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		// TODO Auto-generated method stub
+		return super.clone();
 	}
 };

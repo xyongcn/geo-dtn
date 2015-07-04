@@ -21,4 +21,9 @@ public class NeibhourConfig
 	 * 保留的区域信息的邻居所保留的区域个数（也是邻居之间要交换的区域的个数）
 	 */
 	public final static int NEIGHBOURKEEPAREANUM=200;
+	
+	/**
+	 * 存放邻居的历史区域信息的path
+	 */
+	public final static String NEIGHBOURAREAFILEDIR="/sdcard/geoHistory_dtn/neighbour_area/";
 }

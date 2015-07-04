@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
 import android.util.Log;
 
 /** 
@@ -36,7 +37,7 @@ public class AreaManager
 	/**
 	 * 默认构造函数
 	 */
-	public AreaManager()
+	private AreaManager()
 	{
 		init();
 	}
@@ -44,11 +45,11 @@ public class AreaManager
 	private void init()	
 	{
 		areaMap=new HashMap<String, Area>(500);
-		
+
+		File file=new File("/sdcard/geoHistory_dtn/historyarea");
 		//从文件中读取历史的区域信息
 		try
 		{
-			File file=new File("/sdcard/geoHistory_dtn/historyarea");
 			if(file.exists())
 			{
 				Log.i(tag,"从文件historyarea中读取历史的区域信息");
@@ -76,6 +77,8 @@ public class AreaManager
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
+			GeohistoryLog.i(tag,"读取本节点的历史区域文件有错，ClassNotFoundException");
+			
 			e.printStackTrace();
 		}
 	}
@@ -154,7 +157,8 @@ public class AreaManager
 				try
 				{
 					File file=new File("/sdcard/geoHistory_dtn/historyarea");
-					file.getParentFile().mkdirs();
+					if(!file.getParentFile().exists())
+						file.getParentFile().mkdirs();
 					if(!file.exists())
 						file.createNewFile();
 					
@@ -190,7 +194,8 @@ public class AreaManager
 			if(areamovingLog==null)
 			{
 				File file=new File("/sdcard/dtn_test_data/areamoving.log");
-				file.getParentFile().mkdir();
+				if(!file.getParentFile().exists())
+					file.getParentFile().mkdir();
 				if(!file.exists())
 					file.createNewFile();
 				
@@ -220,7 +225,8 @@ public class AreaManager
 			if(areamovingLog==null)
 			{
 				File file=new File("/sdcard/dtn_test_data/areamoving.log");
-				file.getParentFile().mkdir();
+				if(!file.getParentFile().exists())
+					file.getParentFile().mkdir();
 				if(!file.exists())
 					file.createNewFile();
 				

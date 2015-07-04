@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.geosvr.dtn.servlib.bundling.Bundle;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVector;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorLevel;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorManager;
@@ -239,7 +240,10 @@ public class Area implements Serializable
 		}
 	}
 	
-	//对区域有关的频率向量改变相应的频率
+	/**
+	 * 对区域有关的频率向量改变相应的频率
+	 * @param info:主要是利用AreaInfo里面的时间来改变频率相当当前时间段的频率
+	 */
 	public void changeFVector(AreaInfo info)
 	{
 		for(FrequencyVector vector:vectorlist)
@@ -250,6 +254,62 @@ public class Area implements Serializable
 		//递归向上调用区域改变频率向量的函数
 		if(fatherArea!=null)
 			fatherArea.changeFVector(info);
+	}
+	
+	/**
+	 * 作用 ：根据bundle的目的节点，查询当前区域及其父类区域中离目的地最近的区域（主要是尽可能低的区域层次）
+	 * @param bundle :需要对比目的节点的bundle
+	 * @return :如果父类区域中有和bundle的目的地同一层的区域;则返回该区域；如果没有则返回null;
+	 */
+	public Area checkBundleDestArea(Bundle bundle)
+	{
+		switch(this.getAreaLevel())
+		{
+		case AreaLevel.FIRSTLEVEL:
+			if(this.getAreaId()==bundle.firstArea())
+				return this;
+			else
+			{
+				if(this.getFatherArea()==null)
+					return null;
+				else
+					return this.getFatherArea().checkBundleDestArea(bundle);
+			}
+			
+		case AreaLevel.SECONDLEVEL:
+			if(this.getAreaId()==bundle.secondArea())
+				return this;
+			else
+			{
+				if(this.getFatherArea()==null)
+					return null;
+				else
+					return this.getFatherArea().checkBundleDestArea(bundle);
+			}
+			
+		case AreaLevel.THIRDLEVEL:
+			if(this.getAreaId()==bundle.thirdArea())
+				return this;
+			else
+			{
+				if(this.getFatherArea()==null)
+					return null;
+				else
+					return this.getFatherArea().checkBundleDestArea(bundle);
+			}
+			
+		default:
+			return null;
+		}
+		
+	}
+	
+	/**
+	 * @return : 获取该区域的频率向量列表
+	 */
+	public List<FrequencyVector> getFrequencyVectorList()
+	{
+		return vectorlist;
 	}
 	
 	@Override

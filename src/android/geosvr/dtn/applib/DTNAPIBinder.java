@@ -1132,15 +1132,15 @@ public class DTNAPIBinder extends Binder implements DTNAPI {
 	    	private int floodBundleNum;//洪泛扩散阶段bundle的数量
 	    	private int isFlooding;//是否进入过了flood阶段
 	*/        
-			b[i].setTimestamp(11l);
-			b[i].setInvalidtime(22l);
-			b[i].setZeroArea(33);
-			b[i].setFirstArea(44);
-			b[i].setSecondArea(55);
-			b[i].setThirdArea(66);
-			b[i].setDeliverBundleNum(77);
-			b[i].setFloodBundleNum(88);
-			b[i].setIsFlooding(99);
+//			b[i].setTimestamp(11l);
+//			b[i].setInvalidtime(22l);
+//			b[i].setZeroArea(33);
+//			b[i].setFirstArea(44);
+//			b[i].setSecondArea(55);
+//			b[i].setThirdArea(66);
+//			b[i].setDeliverBundleNum(77);
+//			b[i].setFloodBundleNum(88);
+//			b[i].setIsFlooding(99);
 		}
 		
 		for (int i = 0; i < count; i++) {

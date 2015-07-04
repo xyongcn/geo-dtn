@@ -39,8 +39,18 @@ public class BundleInfoCache implements Serializable{
 	
 	/**
 	 * Internal HashMap to keep track of the Bundles
+	 * 判断该bundle是否向该EndpointID发送过应该采取bundle的关键字来区分，而不是bundle的引用。
+	 * ((b.source().equals(b2.source()))
+						&& (b.creation_ts().seconds() == b2.creation_ts()
+								.seconds())
+						&& (b.creation_ts().seqno() == b2.creation_ts().seqno())
+						&& (b.is_fragment() == b2.is_fragment())
+						&& (b.frag_offset() == b2.frag_offset()) &&
+						(b.orig_length() == b2.orig_length()) && 
+						(b.payload().length() == b2.payload().length()))
+	 * 作用：记录是从哪个link的eid收到了该bundle，之后不再向该link的eid重复发送该bundle
 	 */
-	private HashMap<Bundle,EndpointID> bundle_info_cache_;
+	private HashMap<String,EndpointID> bundle_info_cache_;
 	
 	    /**
 	     * "Constructor that takes the and the number of entries to
@@ -48,7 +58,7 @@ public class BundleInfoCache implements Serializable{
 	     */
 		public  BundleInfoCache(int capacity)
 		{
-			bundle_info_cache_ = new HashMap<Bundle, EndpointID>(capacity);
+			bundle_info_cache_ = new HashMap<String, EndpointID>(capacity);
 		}
 
 	
@@ -58,11 +68,17 @@ public class BundleInfoCache implements Serializable{
 	     */
 		public boolean add_entry(final Bundle bundle, final EndpointID prevhop)
 		{
-			if (bundle_info_cache_.containsKey(bundle)) return false;
+			//bundle转关键字
+			String bundlestr=String.format("%s#%s#%d#%d#%b#%d#%d#%d",
+					bundle.dest().toString(),bundle.source().toString(),bundle.creation_ts().seconds(),bundle.creation_ts().seqno(),
+					bundle.is_fragment(),bundle.frag_offset(),bundle.orig_length(),bundle.payload().length());
+			
+			if (bundle_info_cache_.containsKey(bundle)) 
+				return false;
 			else
 			{
-			bundle_info_cache_.put(bundle, prevhop);
-			return true;
+				bundle_info_cache_.put(bundlestr, prevhop);
+				return true;
 			}
 		}
 		
@@ -77,8 +93,12 @@ public class BundleInfoCache implements Serializable{
 	     */
 		public EndpointID lookup(final Bundle bundle)
 		{
+			//bundle转关键字
+			String bundlestr=String.format("%s#%s#%d#%d#%b#%d#%d#%d",
+					bundle.dest().toString(),bundle.source().toString(),bundle.creation_ts().seconds(),bundle.creation_ts().seqno(),
+					bundle.is_fragment(),bundle.frag_offset(),bundle.orig_length(),bundle.payload().length());
 			
-			return bundle_info_cache_.get(bundle);
+			return bundle_info_cache_.get(bundlestr);
 		}
 
 	    /**
