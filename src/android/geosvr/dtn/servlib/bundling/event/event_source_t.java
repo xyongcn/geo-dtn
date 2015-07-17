@@ -33,10 +33,9 @@ public enum event_source_t {
 	EVENTSRC_STORE("dataStore", 3), // /< the data store
 	EVENTSRC_ADMIN("admin", 4), // /< the admin logic
 	EVENTSRC_FRAGMENTATION("fragmentation", 5), // /< the fragmentation engine
-	EVENTSRC_ROUTER("router", 6), // /< the routing logic
+	EVENTSRC_ROUTER("router", 6); // /< the routing logic
 
-	EVENTSRC_NEIGHBOUR("neighbourInfo",7)// /< information about neighbour's history area (获取邻居的历史区域信息的bundle)
-	;
+//	EVENTSRC_NEIGHBOUR("neighbourInfo",7)// /< information about neighbour's history area (获取邻居的历史区域信息的bundle);
 
 	private static final Map<event_source_t, String> captionLookup = new HashMap<event_source_t, String>();
 	private static final Map<event_source_t, Integer> codeLookup = new HashMap<event_source_t, Integer>();

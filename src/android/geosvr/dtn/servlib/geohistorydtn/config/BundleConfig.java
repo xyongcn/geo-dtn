@@ -9,6 +9,13 @@ import android.geosvr.dtn.applib.DTNAPICode.dtn_bundle_priority_t;
  */
 public class BundleConfig {
 
+	//较少副本转发的副本上限
+	public static final int DELIVERBUNDLENUM=10;
+	
+	//受限洪泛算法的副本上限
+	public static final int FLOODBUNDLENUM=100;
+	
+	
 	/**
 	 * Default expiration time in seconds, set to 1 hour
 	 */

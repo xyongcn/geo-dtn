@@ -387,7 +387,7 @@ public class DTNService extends android.app.Service {
     	BundleDaemon.getInstance().set_app_shutdown(proc, data);
     }
 
-    private DTNAPIBinder dtn_api_binder_ = new DTNAPIBinder();
+    private static DTNAPIBinder dtn_api_binder_ = new DTNAPIBinder();
 
 
     /**
@@ -410,7 +410,7 @@ public class DTNService extends android.app.Service {
 	
 	
 	//用来由其他程序调用进行bundle的发送
-	public boolean sendMessage(String dest_eid,File file,boolean rctp) throws UnsupportedEncodingException, DTNOpenFailException, DTNAPIFailException
+	public static boolean sendMessage(String dest_eid,File file,boolean rctp) throws UnsupportedEncodingException, DTNOpenFailException, DTNAPIFailException
 	{
 		if(!is_running())
 			return false;
@@ -420,7 +420,7 @@ public class DTNService extends android.app.Service {
 		
 		DTNBundlePayload dtn_payload = new DTNBundlePayload(dtn_bundle_payload_location_t.DTN_PAYLOAD_FILE);
 		
-		if(file==null)
+		if(file==null || !file.exists())
 			return false;
 		else
 			dtn_payload.set_file(file);//用指定的文件进行发送
@@ -453,8 +453,7 @@ public class DTNService extends android.app.Service {
 			
 			dtn_api_status_report_code api_send_result ;
 
-			api_send_result = dtn_api_binder_
-						.dtn_multiple_send(dtn_handle, spec, dtn_payload, 1);
+			api_send_result = dtn_api_binder_.dtn_multiple_send(dtn_handle, spec, dtn_payload, 1);
 			// If the API fail to execute throw the exception so user interface can catch and notify users
 			if (api_send_result != dtn_api_status_report_code.DTN_SUCCESS) {
 				throw new DTNAPIFailException();
@@ -467,6 +466,12 @@ public class DTNService extends android.app.Service {
 		}
 		
 		return true;
+	} 
+	
+	//为了在GeoDTN里面进行发送bundle设计
+	public static DTNAPIBinder getDTNAPIBinder()
+	{
+		return dtn_api_binder_;
 	}
 
 };

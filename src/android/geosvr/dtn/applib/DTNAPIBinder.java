@@ -60,6 +60,7 @@ import android.geosvr.dtn.servlib.bundling.event.BundleReceivedEvent;
 import android.geosvr.dtn.servlib.bundling.event.RegistrationAddedEvent;
 import android.geosvr.dtn.servlib.bundling.event.RegistrationRemovedEvent;
 import android.geosvr.dtn.servlib.bundling.event.event_source_t;
+import android.geosvr.dtn.servlib.geohistorydtn.neighbour.Neighbour;
 import android.geosvr.dtn.servlib.naming.EndpointID;
 import android.geosvr.dtn.servlib.naming.EndpointIDPattern;
 import android.geosvr.dtn.servlib.reg.APIRegistration;
@@ -148,7 +149,7 @@ public class DTNAPIBinder extends Binder implements DTNAPI {
 	 * @param handle
 	 * @return whether the DTNHandle of openned before by the API or not
 	 */
-	private boolean is_handle_valid(DTNHandle handle) {
+	public boolean is_handle_valid(DTNHandle handle) {
 		lock_.lock();
 		try {
 			return handles_.contains(handle);
@@ -1105,7 +1106,6 @@ public class DTNAPIBinder extends Binder implements DTNAPI {
 		
 		return dtn_api_status_report_code.DTN_SUCCESS;
 	}
-
 	
 	///////////////////////////////////////////////////////////////////////////
 	public dtn_api_status_report_code dtn_multiple_send(DTNHandle handle,
@@ -1118,7 +1118,6 @@ public class DTNAPIBinder extends Binder implements DTNAPI {
 		for (int i=0; i<count; i++) {
 			dtn_bundle_id[i] = new DTNBundleID();
 			b[i] = new Bundle(location_t.DISK);
-			b[i] = dtn_send_multiple_final(handle, spec, dtn_payload, dtn_bundle_id[i], b[i]);
 			
 			//检测添加数据
 			/* private long timestamp;
@@ -1131,16 +1130,23 @@ public class DTNAPIBinder extends Binder implements DTNAPI {
 	    	private int deliverBundleNum;//传递阶段的bundle数量
 	    	private int floodBundleNum;//洪泛扩散阶段bundle的数量
 	    	private int isFlooding;//是否进入过了flood阶段
+	    	
+	    	int bundleType=DATA_BUNDLE;//判断bundle的类型，属于邻居间交换区域信息的bundle，或者是数据bundle
 	*/        
 //			b[i].setTimestamp(11l);
 //			b[i].setInvalidtime(22l);
-//			b[i].setZeroArea(33);
-//			b[i].setFirstArea(44);
-//			b[i].setSecondArea(55);
-//			b[i].setThirdArea(66);
-//			b[i].setDeliverBundleNum(77);
-//			b[i].setFloodBundleNum(88);
-//			b[i].setIsFlooding(99);
+			b[i].setZeroArea(33);
+			b[i].setFirstArea(44);
+			b[i].setSecondArea(55);
+			b[i].setThirdArea(66);
+			b[i].setDeliverBundleNum(77);
+			b[i].setFloodBundleNum(88);
+			b[i].setIsFlooding(99);
+			b[i].setBundleType(11);
+			
+			b[i] = dtn_send_multiple_final(handle, spec, dtn_payload, dtn_bundle_id[i], b[i]);
+			
+			
 		}
 		
 		for (int i = 0; i < count; i++) {
@@ -1149,7 +1155,7 @@ public class DTNAPIBinder extends Binder implements DTNAPI {
 		}
 		return dtn_api_status_report_code.DTN_SUCCESS;
 	}
-	private Bundle dtn_send_multiple_final(DTNHandle handle,
+	public Bundle dtn_send_multiple_final(DTNHandle handle,
 			DTNBundleSpec spec, DTNBundlePayload dtn_payload,
 			DTNBundleID dtn_bundle_id, Bundle b) {
 		// assign the addressing fields...

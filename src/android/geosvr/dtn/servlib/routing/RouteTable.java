@@ -97,7 +97,7 @@ public class RouteTable{
 			    			}
 			    			else
 			    			{
-			    				Log.i(TAG,thislink.remote_eid().toString()+":linker的失效时间:"+thislink.get_invalid_interval());
+			    				Log.v(TAG,thislink.remote_eid().toString()+":linker的失效时间:"+thislink.get_invalid_interval());
 			    				thislink.invalid_interval_minus1();
 			    			}
 			    		}

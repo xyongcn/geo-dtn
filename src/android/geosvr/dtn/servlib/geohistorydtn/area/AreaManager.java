@@ -167,6 +167,7 @@ public class AreaManager
 					{
 						out.writeObject(area);
 					}
+					out.writeObject(null);//加入一个写null对象，防止EOFexception异常
 					out.flush();
 					out.close();
 				}

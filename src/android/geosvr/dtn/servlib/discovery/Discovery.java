@@ -297,18 +297,20 @@ public abstract class Discovery {
 		//说明已有的该链接了
 		else {
 			assert (link != null);
+			//如果link是不可用的，则改变link状态
 			if (!link.isNotUnavailable()) {
 				link.lock().lock();
 				link.set_nexthop(cl_addr);
 				link.lock().unlock();
 
-				link.reset_invalid_interval();
-				
 				BundleDaemon BD = BundleDaemon.getInstance();
 				// request to set link available
 				BD.post(new LinkStateChangeRequest(link, Link.state_t.AVAILABLE,
 						ContactEvent.reason_t.DISCOVERY));
 			}
+
+			//不管link是否可用，都要重新设置过期时间
+			link.reset_invalid_interval();
 		}
 		cm.get_lock().unlock();
 	}

@@ -30,7 +30,8 @@
 		<!--  <tns:Link id="village_tcp_link" conv_layer_type="tcp" dest="192.168.1.7:4556" type="ONDEMAND"/> -->
     </tns:LinksSetting>
 
-
+<!-- geohistory -->
+<!-- epidemic -->
     <!--  Routes Section -->
     <tns:RoutesSetting router_type="geohistory" P_encounter="0.5"
         P_encounter_first="0.25" delta="0.01" alpha="0.5" beta="0.9" K="1" queuing="Fifo">

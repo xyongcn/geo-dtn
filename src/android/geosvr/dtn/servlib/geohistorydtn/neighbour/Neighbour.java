@@ -129,6 +129,15 @@ public class Neighbour implements Serializable
 		return monthvector;
 	}
 	
+	/**
+	 * 获取该邻居的EID
+	 * @return
+	 */
+	public EndpointID getEid()
+	{
+		return neighbourEid;
+	}
+	
 /*	@Override
 	public String toString() 
 	{
