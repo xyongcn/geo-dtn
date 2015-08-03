@@ -35,6 +35,7 @@ import android.geosvr.dtn.servlib.bundling.BundleDaemon;
 import android.geosvr.dtn.servlib.bundling.BundleList;
 import android.geosvr.dtn.servlib.conv_layers.CLInfo;
 import android.geosvr.dtn.servlib.conv_layers.ConvergenceLayer;
+import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
 import android.geosvr.dtn.servlib.naming.EndpointID;
 import android.geosvr.dtn.servlib.routing.RouterInfo;
 import android.geosvr.dtn.systemlib.thread.Lock;
@@ -1235,7 +1236,7 @@ public class Link implements Serializable {
 	 * link的失效时间
 	 */
 	private int invalid_interval=INVALID_INTERVAL;
-	private static int INVALID_INTERVAL=3;//默认的失效时间
+	private static int INVALID_INTERVAL=10;//默认的失效时间
 	public int get_invalid_interval()
 	{
 		return invalid_interval;
@@ -1257,6 +1258,7 @@ public class Link implements Serializable {
 	//重置link的失效时间
 	public void reset_invalid_interval()
 	{
+		GeohistoryLog.v(TAG, String.format("reset link:link dest(%s) ",name() ));
 		invalid_interval=INVALID_INTERVAL;
 	}
 	

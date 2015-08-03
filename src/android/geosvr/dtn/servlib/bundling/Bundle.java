@@ -1308,7 +1308,7 @@ public class Bundle implements Serializable,Cloneable {
 			private int isFlooding=0;//是否进入了flood阶段
 		 */
 		if(zeroArea==0 && firstArea==0 && secondArea==0 && thirdArea==0 && deliverBundleNum==0
-				&& floodBundleNum==0 && isFlooding==0)
+				&& floodBundleNum==0)
 		{
 			return false;
 		}
@@ -1321,5 +1321,38 @@ public class Bundle implements Serializable,Cloneable {
 	public Object clone() throws CloneNotSupportedException {
 		// TODO Auto-generated method stub
 		return super.clone();
+	}
+	
+	/**
+	 * 判断bundle属于哪一种类型
+	 * DataBundle=0;//用来节点之间发送数据的bundle
+	 * NeighbourHistoryAreaBundle=1;//用来表示邻居之间交换历史区域信息的bundle
+	 */
+	int bundleType=DATA_BUNDLE;
+	public final static int DATA_BUNDLE=1;
+	public final static int NEI_AREA_BUNDLE=2;
+	
+	//获取bundle的类型
+	public int getBundleType()
+	{
+		return bundleType;
+	}
+	
+	//设置bundle的类型
+	public boolean setBundleType(int type)
+	{
+		switch(type)
+		{
+		case DATA_BUNDLE:
+		case NEI_AREA_BUNDLE:
+
+			bundleType=type;
+			return true;
+			
+		default:
+			//默认使用数据bundle
+			bundleType=DATA_BUNDLE;
+			return false;
+		}
 	}
 };

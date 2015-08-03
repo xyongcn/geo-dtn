@@ -1,5 +1,7 @@
 package android.geosvr.dtn.servlib.geohistorydtn.routing;
 
+import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -7,20 +9,35 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import android.geosvr.dtn.DTNService;
+import android.geosvr.dtn.applib.DTNAPIBinder;
+import android.geosvr.dtn.applib.DTNAPICode.dtn_api_status_report_code;
+import android.geosvr.dtn.applib.DTNAPICode.dtn_bundle_payload_location_t;
+import android.geosvr.dtn.applib.types.DTNBundleID;
+import android.geosvr.dtn.applib.types.DTNBundlePayload;
+import android.geosvr.dtn.applib.types.DTNBundleSpec;
+import android.geosvr.dtn.applib.types.DTNEndpointID;
+import android.geosvr.dtn.applib.types.DTNHandle;
+import android.geosvr.dtn.apps.DTNAPIFailException;
+import android.geosvr.dtn.apps.DTNOpenFailException;
+import android.geosvr.dtn.apps.DTNSend;
 import android.geosvr.dtn.servlib.bundling.Bundle;
 import android.geosvr.dtn.servlib.bundling.BundleDaemon;
 import android.geosvr.dtn.servlib.bundling.ForwardingInfo;
+import android.geosvr.dtn.servlib.bundling.BundlePayload.location_t;
 import android.geosvr.dtn.servlib.bundling.event.BundleEvent;
 import android.geosvr.dtn.servlib.bundling.event.BundleReceivedEvent;
 import android.geosvr.dtn.servlib.bundling.event.ContactDownEvent;
 import android.geosvr.dtn.servlib.bundling.event.ContactUpEvent;
 import android.geosvr.dtn.servlib.bundling.event.LinkCreatedEvent;
+import android.geosvr.dtn.servlib.bundling.event.event_source_t;
 import android.geosvr.dtn.servlib.contacts.Link;
 import android.geosvr.dtn.servlib.contacts.Link.state_t;
 import android.geosvr.dtn.servlib.geohistorydtn.area.Area;
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaInfo;
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaLevel;
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaManager;
+import android.geosvr.dtn.servlib.geohistorydtn.config.BundleConfig;
 import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
 import android.geosvr.dtn.servlib.geohistorydtn.neighbour.Neighbour;
 import android.geosvr.dtn.servlib.geohistorydtn.neighbour.NeighbourArea;
@@ -81,27 +98,46 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		 * 利用creation_ts和DTNTime.TIMEVAL_CONVERSION即可得到bundle创建时的真实时间
 		 * bundle的expirionTime则是指bundle的有效时间
 		 */
-		
-		
-		switch(event.source())
+		if(event.bundle().getBundleType()==Bundle.NEI_AREA_BUNDLE)
 		{
-		//收到邻居发来的相关信息
-		case EVENTSRC_NEIGHBOUR:
+			//自己想邻居发送的交换历史区域的bundle
+			if(event.bundle().source().toString().equals(BundleDaemon.localEid()))
+			{
+				super.handle_bundle_received(event);
+			}
 			//保证该邻居交换历史区域的bundle是发给自己的
-			if(event.bundle().dest().toString().equals(BundleDaemon.localEid()))
+			else if(event.bundle().dest().toString().equals(BundleDaemon.localEid()))
 			{
 				Bundle b=event.bundle();
 				Neighbour nei=NeighbourManager.getInstance().getNeighbour(b.source());
 				nei.generateArea(b.payload());
 				
 				//向该邻居发送队列里面需要发送的bundle（邻居间交换bundle的路由算法）
+				//只需要将队列中的bundle向该link重新发送即可
 				//reroute();
 			}
+			
+		}
+		//对其他类型bundle进行
+		else if(event.bundle().getBundleType()==Bundle.DATA_BUNDLE)
+		{
+			super.handle_bundle_received(event);
+		}
+		else
+		{
+			GeohistoryLog.e(tag, String.format("bundle_%d 的类型不明确，type：%d", event.bundle().bundleid(),event.bundle().getBundleType()));
+		}
+		
+		/*switch(event.source())
+		{
+		//收到邻居发来的相关信息
+		case EVENTSRC_NEIGHBOUR:
+			
 			break;
 			
 		default:
 			super.handle_bundle_received(event);
-		}
+		}*/
 		
 		
 	}
@@ -152,13 +188,28 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 //		a)	触发对已有邻居信息的保存
 		Neighbour nei=NeighbourManager.getInstance().checkNeighbour(eid);
 		
-//		b)	触发邻居之间交换信息的bundle发送
-			/**
-			 * 1.判断是否需要发送本节点的邻居
-			 * 
-			 * 2.触发已有bundle队列里面的所有bundle的route事件（会尝试判断是否发送这些bundle）;这个事件应该在收到邻居相应的bundle信息后
-			 */
+//		b)	触发邻居之间交换信息的bundle发送,发送本节点的历史区域信息
+		/*File file=new File("/sdcard/geoHistory_dtn/historyarea");
+		try {
+			sendMessage(nei.getEid().toString(), file, false, null,Bundle.NEI_AREA_BUNDLE);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			GeohistoryLog.e(tag, String.format("向邻居%s发送自己的区域信息的bundle出错:%s", nei.getEid().toString(),"UnsupportedEncodingException"));
+		} catch (DTNOpenFailException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			GeohistoryLog.e(tag, String.format("向邻居%s发送自己的区域信息的bundle出错:%s", nei.getEid().toString(),"DTNOpenFailException"));
+		} catch (DTNAPIFailException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			GeohistoryLog.e(tag, String.format("向邻居%s发送自己的区域信息的bundle出错:%s", nei.getEid().toString(),"DTNAPIFailException"));
+		}
+		*/
 		
+		/**
+			 * 1.判断是否需要发送本节点的邻居，
+			 */
 
 	}
 	
@@ -204,6 +255,9 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 					bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
 			return 0;
 		}
+		
+		//如果是邻居间传递各自区域信息的bundle
+//		if()
 		
 		//查找合适的需要转发的bundle
 		Area bundleArea=new Area(AreaLevel.FIRSTLEVEL, bundle.firstArea());
@@ -756,4 +810,149 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	{
 		
 	}*/
+	
+	/**
+	 * GeoHistoryDtn发送数据的
+	 * @param dest_eid
+	 * @param file
+	 * @param rctp
+	 * @param eventSource :标明该bundle是哪种类型，是APPbundle还是邻居间交换信息的bundle
+	 * @param areaid :用来表示目的节点的区域信息
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 * @throws DTNOpenFailException
+	 * @throws DTNAPIFailException
+	 */
+	public boolean sendMessage(String dest_eid,File file,boolean rctp,int[] areaid,int bundleType) throws UnsupportedEncodingException, DTNOpenFailException, DTNAPIFailException
+	{
+		if(!DTNService.is_running())
+			return false;
+		
+		//判断bundle的类型
+		if(bundleType==Bundle.DATA_BUNDLE)
+		{
+			if(areaid==null || areaid.length!=4)
+			{
+				GeohistoryLog.e(tag, "DTN应用发送bundle时，目的节点的各层次区域信息不明确");
+				return false;
+			}
+		}
+		else if(bundleType!=Bundle.NEI_AREA_BUNDLE)
+		{
+			GeohistoryLog.e(tag, "DTN发送bundle时，event_source不明确，既不是应用的bundle也不是邻居的bundle");
+			return false;
+		}
+		
+		DTNAPIBinder dtn_api_binder_=DTNService.getDTNAPIBinder();
+		
+		double dest_longitude = -1.0;
+		double dest_latitude = -1.0;
+		
+		DTNBundlePayload dtn_payload = new DTNBundlePayload(dtn_bundle_payload_location_t.DTN_PAYLOAD_FILE);
+		
+		if(file==null || !file.exists())
+			return false;
+		else
+			dtn_payload.set_file(file);//用指定的文件进行发送
+//				dtn_payload.set_file(new File("/sdcard/test_0.5M.mp3"));
+		   
+		// Start the DTN Communication
+		DTNHandle dtn_handle = new DTNHandle();
+		dtn_api_status_report_code open_status = dtn_api_binder_.dtn_open(dtn_handle);
+		if (open_status != dtn_api_status_report_code.DTN_SUCCESS) throw new DTNOpenFailException();
+		try
+		{
+			DTNBundleSpec spec = new DTNBundleSpec();
+			
+			// set destination from the user input
+			spec.set_dest(new DTNEndpointID(dest_eid));
+			spec.setDestLongitude(dest_longitude);
+			spec.setDestLatitude(dest_latitude);
+			// set the source EID from the bundle Daemon
+			spec.set_source(new DTNEndpointID(BundleDaemon.getInstance().local_eid().toString()));
+				
+			// Set expiration in seconds, default to 1 hour
+			spec.set_expiration(DTNSend.EXPIRATION_TIME);
+			// no option processing for now
+			if(rctp)//rctp为true表示执行的是带回复的bundle
+				spec.set_dopts(2);
+			else
+				spec.set_dopts(DTNSend.DELIVERY_OPTIONS);
+			// Set prority
+			spec.set_priority(DTNSend.PRIORITY);
+			
+			dtn_api_status_report_code api_send_result ;
+
+//			api_send_result = dtn_api_binder_.dtn_multiple_send(dtn_handle, spec, dtn_payload, 1);
+			
+			int count=1;//bundle发送的副本数
+			if (!dtn_api_binder_.is_handle_valid(dtn_handle))
+				api_send_result=dtn_api_status_report_code.DTN_EHANDLE_INVALID;
+			DTNBundleID[] dtn_bundle_id = new DTNBundleID[count];
+			Bundle[] b = new Bundle[count];
+			for (int i=0; i<count; i++) {
+				dtn_bundle_id[i] = new DTNBundleID();
+				b[i] = new Bundle(location_t.DISK);
+				b[i] = dtn_api_binder_.dtn_send_multiple_final(dtn_handle, spec, dtn_payload, dtn_bundle_id[i], b[i]);
+				
+				//检测添加数据
+				/* private long timestamp;
+		    	private long invalidtime;//bundle的失效时间
+		    	private int zeroArea;//0层区域，最底层区域，也是可达层区域
+		    	private int firstArea;//1层区域，区域数字有小到大，依次范围扩大
+		    	private int secondArea;//2层区域
+		    	private int thirdArea;//3层区域
+		    	
+		    	private int deliverBundleNum;//传递阶段的bundle数量
+		    	private int floodBundleNum;//洪泛扩散阶段bundle的数量
+		    	private int isFlooding;//是否进入过了flood阶段
+		    	
+		    	int bundleType=DATA_BUNDLE;//判断bundle的类型，属于邻居间交换区域信息的bundle，或者是数据bundle
+		*/        
+				
+//				b[i].setZeroArea(33);
+//				b[i].setFirstArea(44);
+//				b[i].setSecondArea(55);
+//				b[i].setThirdArea(66);
+//				b[i].setDeliverBundleNum(77);
+//				b[i].setFloodBundleNum(88);
+//				b[i].setIsFlooding(99);
+				//设置目的节点区域信息
+				if(bundleType==Bundle.DATA_BUNDLE)
+				{
+					b[i].setZeroArea(areaid[0]);
+					b[i].setFirstArea(areaid[1]);
+					b[i].setSecondArea(areaid[2]);
+					b[i].setThirdArea(areaid[3]);
+				}
+				//设置bundle的副本数目
+				b[i].setDeliverBundleNum(BundleConfig.DELIVERBUNDLENUM);
+				b[i].setFloodBundleNum(BundleConfig.FLOODBUNDLENUM);
+				b[i].setIsFlooding(0);
+				//设置bundle的类型
+				b[i].setBundleType(bundleType);
+			}
+			
+			for (int i = 0; i < count; i++) {
+				//向邻居发送区域交换信息的bundle
+//				BundleDaemon.getInstance().post(
+//						new BundleReceivedEvent(b[i], event_source_t.EVENTSRC_NEIGHBOUR));
+				BundleDaemon.getInstance().post(
+						new BundleReceivedEvent(b[i], event_source_t.EVENTSRC_APP));
+			}
+			api_send_result=dtn_api_status_report_code.DTN_SUCCESS;
+			
+			// If the API fail to execute throw the exception so user interface can catch and notify users
+			if (api_send_result != dtn_api_status_report_code.DTN_SUCCESS) {
+				throw new DTNAPIFailException();
+			}
+		
+		}
+		finally
+		{
+			dtn_api_binder_.dtn_close(dtn_handle);
+		}
+		
+		return true;
+	}
 }
