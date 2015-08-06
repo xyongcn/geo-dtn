@@ -61,7 +61,10 @@
 			</intent-filter>
 		</receiver>
 
+		<uses-library android:name="android.test.runner" />
 	</application>
 
+	<instrumentation android:name="android.test.InstrumentationTestRunner"  
+   android:targetPackage="android.geosvr.dtn" android:label="Tests for My App" />
 
 </manifest> 

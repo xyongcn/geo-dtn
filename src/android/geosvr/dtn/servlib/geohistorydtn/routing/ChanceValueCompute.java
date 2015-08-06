@@ -365,7 +365,7 @@ public class ChanceValueCompute
 	 * 计算向量之间相乘
 	 * @return :如果向量为空或者两者长度不等，返回null；否则返回
 	 */
-	static double[] vectorMultiplyvector(double[] a,double[] b)
+	public static double[] vectorMultiplyvector(double[] a,double[] b)
 	{
 		if(a==null && b==null)
 		{
@@ -401,7 +401,7 @@ public class ChanceValueCompute
 		return a;
 	}
 	
-	static double vectorSum(double[] a)
+	public static double vectorSum(double[] a)
 	{
 		if(a==null)
 			return -1;
