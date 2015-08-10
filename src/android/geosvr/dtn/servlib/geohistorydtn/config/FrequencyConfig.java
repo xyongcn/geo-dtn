@@ -48,4 +48,9 @@ public class FrequencyConfig {
 	{
 		return timeNow;
 	}
+	
+	public void setConfigTime(long configTime)
+	{
+		timeNow=configTime;
+	}
 }

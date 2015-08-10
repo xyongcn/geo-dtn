@@ -56,10 +56,10 @@ public class TimeManager
 	//构造函数
 	private TimeManager()	
 	{
-//		Locale local=Calendar.getInstance().
-//		configTime=Calendar.getInstance().set
 		configTime=Calendar.getInstance();
 		nextTime=Calendar.getInstance();
+		
+		resetTime();
 		
 		//初始化
 		init();
@@ -77,6 +77,20 @@ public class TimeManager
 		//初次启用计时代码
 		timeTaskRun=true;
 		timeCount();
+	}
+	
+	/**
+	 * 对照FrequencyConfig里面的时间配置，重置计时器的双时间
+	 */
+	public void resetTime()
+	{
+		configTime.setTimeInMillis(FrequencyConfig.getInstance().getConfigTime());
+		nextTime.setTimeInMillis(FrequencyConfig.getInstance().getConfigTime());
+		
+		minNum=configTime.get(Calendar.MINUTE);
+		hourNum=configTime.get(Calendar.HOUR_OF_DAY);//时间的范围是0-23
+		weekDayNum=configTime.get(Calendar.DAY_OF_WEEK)-1;//星期在日历中范围是1-7
+		monthDayNum=configTime.get(Calendar.MONTH);//月的范围是0-12
 	}
 	
 	public void destroy()
@@ -300,7 +314,10 @@ public class TimeManager
 	 */
 	private class mTimerTask extends TimerTask
 	{
-		
+		protected void resetCount()
+		{
+			
+		}
 		
 		//执行相应的任务
 		public void Task()
@@ -315,7 +332,7 @@ public class TimeManager
 			}
 			
 			//星期级触发任务
-			int weekDayNow=configTime.get(Calendar.DAY_OF_WEEK);
+			int weekDayNow=configTime.get(Calendar.DAY_OF_WEEK)-1;
 			if(weekDayNum!=weekDayNow)
 			{
 				weekDayNum=weekDayNow;
@@ -335,8 +352,7 @@ public class TimeManager
 		
 		@Override
 		public void run() {
-			// TODO Auto-generated method stub
-			if(firstTime)
+			/*if(firstTime)
 			{
 				minNum=nextTime.get(Calendar.MINUTE);
 				hourNum=nextTime.get(Calendar.HOUR_OF_DAY);
@@ -344,7 +360,7 @@ public class TimeManager
 				monthDayNum=nextTime.get(Calendar.MONTH);
 				
 				firstTime=false;
-			}
+			}*/
 			
 			//判断是否运行
 			if(timeTaskRun)
