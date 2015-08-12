@@ -69,6 +69,14 @@ public abstract class FrequencyVector implements Serializable{
 	}
 	
 	/**
+	 * 获取服务的对象
+	 */
+	public int getServiceType()
+	{
+		return this.serviceType;
+	}
+	
+	/**
 	 * 对更换区域时，处理当前时间段的向量进行处理
 	 */
 	public abstract void changeVector(AreaInfo info);

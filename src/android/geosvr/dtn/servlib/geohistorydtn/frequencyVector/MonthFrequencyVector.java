@@ -30,7 +30,7 @@ public class MonthFrequencyVector extends FrequencyVector implements Serializabl
 		for(int i=0;i<vectorLength;i++)
 		{
 			vector[i]=0;
-			vectorChange[i]=true;
+			vectorChange[i]=false;
 		}
 	}
 
@@ -59,7 +59,7 @@ public class MonthFrequencyVector extends FrequencyVector implements Serializabl
 			if(!vectorChange[month])
 			{
 				++vector[month];
-				vectorChange[month]=false;
+				vectorChange[month]=true;
 			}
 		}
 	}
