@@ -65,7 +65,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		init();
 	}
 	
-	private void init()	
+	private void init()
 	{
 		Log.i(tag,"starts GeoHistoryRouter");
 		
