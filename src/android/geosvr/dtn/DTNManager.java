@@ -47,11 +47,13 @@ import android.geosvr.dtn.servlib.config.InvalidDTNConfigurationException;
 import android.geosvr.dtn.servlib.config.LinksSetting.LinkEntry;
 import android.geosvr.dtn.servlib.config.RoutesSetting.RouteEntry;
 import android.geosvr.dtn.servlib.contacts.ContactManager;
-import android.geosvr.dtn.servlib.contacts.Interface;
-import android.geosvr.dtn.servlib.contacts.Link;
+import android.geosvr.dtn.servlib.geohistorydtn.area.AreaManager;
 import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocation;
-import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocationFromScript;
-import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.ReadGeoData;
+import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocationFromSimulator;
+import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.questAreaInfo.AreaLayerInfo;
+import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.questAreaInfo.QuestAreaInfo;
+import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorManager;
+import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
 import android.geosvr.dtn.servlib.geohistorydtn.timeManager.TimeManager;
 import android.geosvr.dtn.servlib.storage.BundleStore;
 import android.geosvr.dtn.servlib.storage.GlobalStorage;
@@ -290,6 +292,7 @@ public class DTNManager extends Activity  {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.dtnmanager);
 		init();
+		
 	}
 
 	/**
@@ -361,27 +364,27 @@ public class DTNManager extends Activity  {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvalidDTNConfigurationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
 		
+		
+		//时间管理器的第一次启动
+		TimeManager.getInstance().init();
+		//区域管理器从文件读入已有的历史区域
+		AreaManager.getInstance().init();
 		//测试读取DTN连通数据
 		try {
-			currentLocation=new CurrentLocationFromScript(this);
+//			currentLocation=new CurrentLocationFromScript(this);
+			currentLocation=CurrentLocationFromSimulator.getInstance();
+			if(currentLocation instanceof CurrentLocationFromSimulator)
+				((CurrentLocationFromSimulator) currentLocation).init();
 			
 		} catch (NotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
-		
-		//测试时间管理器的作用
-		TimeManager tManager=TimeManager.getInstance();
 	}
 
 	/**
@@ -1208,6 +1211,32 @@ public class DTNManager extends Activity  {
 			return false;
 		}
 
+	}
+	
+	@Override
+	protected void onDestroy() {
+		shutdown();
+		super.onDestroy();
+	}
+	
+	private void shutdown(){
+		//关闭相关的信息
+		//关闭计时器
+		TimeManager.getInstance().shutdown();
+		
+		//关闭请求gps和分层信息
+		CurrentLocationFromSimulator.getInstance().shutdown();
+		
+		//清空频率向量管理器的引用数据
+		FrequencyVectorManager.getInstance().shutdown();
+		
+		//关闭区域的管理器
+		AreaManager.getInstance().shutdown();
+		
+		//关闭邻居的管理器
+		
+		//关闭log的相关信息
+		GeohistoryLog.getInstance().shutdown();
 	}
 	
 	/**

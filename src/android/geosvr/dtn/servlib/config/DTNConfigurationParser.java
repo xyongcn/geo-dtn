@@ -450,6 +450,13 @@ public class DTNConfigurationParser {
 					
 					if (address_family.getValue().equals("ip"))
 					de.set_address_family(address_family_t.IP);
+					/**
+					 * 添加的利用aodv进行邻居发现的discovery方式，
+					 * @author wwtao 2015-10-20
+					 */
+					else if (address_family.getValue().equals("aodv")){
+						de.set_address_family(address_family_t.AODV);
+					}
 					else
 						throw new InvalidDTNConfigurationException("Address Family Unknown");
 					

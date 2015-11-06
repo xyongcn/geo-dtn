@@ -37,6 +37,8 @@ import android.geosvr.dtn.servlib.geohistorydtn.area.Area;
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaInfo;
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaLevel;
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaManager;
+import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocationFromSimulator;
+import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.questAreaInfo.AreaLayerInfo;
 import android.geosvr.dtn.servlib.geohistorydtn.config.BundleConfig;
 import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
 import android.geosvr.dtn.servlib.geohistorydtn.neighbour.Neighbour;
@@ -97,24 +99,32 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		 * DTN中的时间，bundle的creation_ts为bundle创建的相对时间，DTNTime.TIMEVAL_CONVERSION就是相对的参数，应该是2000，00：00。
 		 * 利用creation_ts和DTNTime.TIMEVAL_CONVERSION即可得到bundle创建时的真实时间
 		 * bundle的expirionTime则是指bundle的有效时间
+		 * bundle之间
 		 */
 		if(event.bundle().getBundleType()==Bundle.NEI_AREA_BUNDLE)
 		{
 			//自己想邻居发送的交换历史区域的bundle
 			if(event.bundle().source().toString().equals(BundleDaemon.localEid()))
 			{
+				GeohistoryLog.i(tag,String.format("本节点往%s发送自己的区域移动信息",event.bundle().dest().toString()));
 				super.handle_bundle_received(event);
 			}
 			//保证该邻居交换历史区域的bundle是发给自己的
 			else if(event.bundle().dest().toString().equals(BundleDaemon.localEid()))
 			{
+				GeohistoryLog.i(tag,String.format("收到来自%s的区域移动信息",event.bundle().source().toString()));
 				Bundle b=event.bundle();
-				Neighbour nei=NeighbourManager.getInstance().getNeighbour(b.source());
-				nei.generateArea(b.payload());
+//				Neighbour nei=NeighbourManager.getInstance().getNeighbour(b.source());//用这个方式可能得到的是没有被创建的邻居
+				Neighbour nei=NeighbourManager.getInstance().checkNeighbour(b.source());
+				nei.generateArea(b.payload());//用收到的邻居的bundle来
 				
 				//向该邻居发送队列里面需要发送的bundle（邻居间交换bundle的路由算法）
 				//只需要将队列中的bundle向该link重新发送即可
 				//reroute();
+			}
+			else{
+				GeohistoryLog.i(tag,String.format("既不是自己发出的，也不是发给自己的邻居信息，源：%s,目的：%s"
+						,event.bundle().source().toString(),event.bundle().dest().toString()));
 			}
 			
 		}
@@ -179,29 +189,28 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	 */
 	@Override
 	protected void handle_contact_up(ContactUpEvent event) {
-		// TODO Auto-generated method stub
 //		super.handle_contact_up(event);//无用
+		
+		GeohistoryLog.i(tag, String.format("geohistory router, handle contact up"));
 		
 		//获取eid
 		Link link=event.contact().link();
 		EndpointID eid=link.remote_eid();
 //		a)	触发对已有邻居信息的保存
 		Neighbour nei=NeighbourManager.getInstance().checkNeighbour(eid);
+		nei.addTimeCount();//添加当前邻居的计时器
 		
 //		b)	触发邻居之间交换信息的bundle发送,发送本节点的历史区域信息
 		/*File file=new File("/sdcard/geoHistory_dtn/historyarea");
 		try {
 			sendMessage(nei.getEid().toString(), file, false, null,Bundle.NEI_AREA_BUNDLE);
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			GeohistoryLog.e(tag, String.format("向邻居%s发送自己的区域信息的bundle出错:%s", nei.getEid().toString(),"UnsupportedEncodingException"));
 		} catch (DTNOpenFailException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			GeohistoryLog.e(tag, String.format("向邻居%s发送自己的区域信息的bundle出错:%s", nei.getEid().toString(),"DTNOpenFailException"));
 		} catch (DTNAPIFailException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			GeohistoryLog.e(tag, String.format("向邻居%s发送自己的区域信息的bundle出错:%s", nei.getEid().toString(),"DTNAPIFailException"));
 		}
@@ -215,7 +224,9 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	
 	@Override
 	protected void handle_contact_down(ContactDownEvent event) {
-		// TODO Auto-generated method stub
+
+		GeohistoryLog.i(tag, String.format("geohistory router, handle contact up"));
+		
 		super.handle_contact_down(event);
 		
 		//移除该邻居频率的计时器
@@ -347,7 +358,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		}
 		else
 		{
-			//本节点进入目的区域后又离开了
+			//本节点进入目的区域后又离开了,这里不进行任何转发
 			if(bundle.isFlooding()==1)
 			{
 				GeohistoryLog.i(tag, String.format("进入目标区域又离开了，不进行任何转发。bundle_%d,目的区域(0-3)：%d.%d.%d.%d",
@@ -418,7 +429,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 						}
 						else
 						{
-							Bundle forwardbundle=null;;
+							Bundle forwardbundle=null;
 							try {
 								forwardbundle=(Bundle) bundle.clone();
 							} catch (CloneNotSupportedException e) {
@@ -566,7 +577,9 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				//如果是普通转发，获取尽可能接近目的区域的邻居的link
 				if(sameAreaLevel!=-1)
 				{
-					Neighbour neighbour=NeighbourManager.getInstance().getNeighbour(bundle.dest());
+//					Neighbour neighbour=NeighbourManager.getInstance().getNeighbour(bundle.dest());//这里不应该是找到历史邻居中的目的节点，而是当前节点的历史邻居位置
+					Neighbour neighbour=NeighbourManager.getInstance().getNeighbour(entry.dest_pattern());
+					
 					if(neighbour==null)
 						continue;
 					
@@ -722,7 +735,6 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		//此处后续需要改为bundleDaemon里面的逻辑标志位
 		while(true)
 		{
@@ -734,7 +746,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				AreaInfo ainfo=areaInfoList.take();
 				if( isChangedArea(ainfo))
 				{
-					//调用AreaManager，判断是否为新区域，
+					//调用AreaManager，判断是否为新区域；如果区域发生了变动，修改新出现的区域的频率向量
 					Area newBaseArea=AreaManager.getInstance().checkAreaInfo(ainfo);
 					if(newBaseArea!=null)
 					{
@@ -753,7 +765,6 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				}
 				
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -773,12 +784,12 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		//旧区域为空的变更计时器
 		if(oldarea==null)
 		{
-			Log.i(tag,String.format("首次加载新区域的频率香料到计时器中（新区域：%d#%d）"
+			Log.d(tag,String.format("首次加载新区域的频率香料到计时器中（新区域：%d#%d）"
 					,newarea.getAreaLevel(),newarea.getAreaId()));
 			newarea.addTimeCount();
 			changeAreaTimeCount(null,newarea.getFatherArea());
 			
-			Log.i(tag,"进入新区域的频率向量:"+newarea.toString());
+			Log.d(tag,"进入新区域的频率向量:"+newarea.toString());
 			return ;
 		}
 		
@@ -793,8 +804,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			newarea.addTimeCount();
 			changeAreaTimeCount(oldarea.getFatherArea(),newarea.getFatherArea());
 			
-			Log.i(tag,"原先区域的频率向量:"+oldarea.toString());
-			Log.i(tag,"当前区域的频率向量:"+newarea.toString());
+			Log.d(tag,"原先区域的频率向量:"+oldarea.toString());
+			Log.d(tag,"当前区域的频率向量:"+newarea.toString());
 		}
 		else
 			Log.d(tag,String.format("新旧区域为同一层的同一个区域，变动相应的区域频率向量计时停止（旧区域：%d#%d 新区域：%d#%d）"
@@ -955,4 +966,5 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		
 		return true;
 	}
+	
 }

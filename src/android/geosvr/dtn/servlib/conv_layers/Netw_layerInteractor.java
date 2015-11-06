@@ -6,31 +6,24 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ListIterator;
-import java.util.concurrent.PriorityBlockingQueue;
 
-
-import android.geosvr.dtn.DTNManager;
 import android.geosvr.dtn.servlib.bundling.Bundle;
 import android.geosvr.dtn.servlib.bundling.BundleDaemon;
 import android.geosvr.dtn.servlib.bundling.BundleList;
 import android.geosvr.dtn.servlib.bundling.ForwardingInfo;
-import android.geosvr.dtn.servlib.bundling.event.BundleEvent;
-import android.geosvr.dtn.servlib.bundling.event.ContactEvent;
-import android.geosvr.dtn.servlib.bundling.event.LinkStateChangeRequest;
-import android.geosvr.dtn.servlib.bundling.event.event_type_t;
 import android.geosvr.dtn.servlib.bundling.exception.BundleListLockNotHoldByCurrentThread;
 import android.geosvr.dtn.servlib.contacts.ContactManager;
 import android.geosvr.dtn.servlib.contacts.Link;
 import android.geosvr.dtn.servlib.contacts.Link.state_t;
-import android.geosvr.dtn.servlib.discovery.IPDiscovery;
-import android.geosvr.dtn.servlib.discovery.IPDiscovery.cl_type_t;
+import android.geosvr.dtn.servlib.discovery.PASVDiscovery;
+import android.geosvr.dtn.servlib.discovery.PASVExtraInfo;
 import android.geosvr.dtn.servlib.naming.EndpointID;
 import android.geosvr.dtn.servlib.naming.EndpointIDPattern;
 import android.geosvr.dtn.servlib.routing.RouteEntry;
 import android.geosvr.dtn.servlib.routing.RouteEntryVec;
-import android.geosvr.dtn.systemlib.thread.MsgBlockingQueue;
 import android.geosvr.dtn.systemlib.util.IpHelper;
 import android.util.Log;
 
@@ -73,7 +66,7 @@ public class Netw_layerInteractor implements Runnable {
 	private static Netw_layerInteractor instance_ = null;
 	private static final String TAG = "Netw_layerInteractor";
 
-	private void register2netw_layer() {
+	public void register2netw_layer() {
 		DatagramSocket sock_register = null;
 		try {
 			sock_register = new DatagramSocket(DTNREGISTERPORT);
@@ -92,6 +85,32 @@ public class Netw_layerInteractor implements Runnable {
 	}
 	
 	public void init() {
+		//testWu,用来测试能否输出
+		/*(new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				for(int i=0;i<100;i++){
+					try {
+						Thread.sleep(15000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					//Log.e("testWu",String.format("发起第%d次获得邻居请求",i));
+					
+					HashMap<String, PASVExtraInfo> neighbour_map=PASVDiscovery.getInstance().getPASVDiscoveriesList();
+					
+					Log.e("testWu",String.format("第%d次获得获得邻居信息",i));
+					for(PASVExtraInfo info:neighbour_map.values()){
+						Log.i("testWu",info.toString());
+					}
+					Log.e("testWu",String.format("第%d次获得获得邻居信息结束",i));
+				}
+			}
+		})).start();*/
+		
 		start();
 	}
 	
@@ -136,7 +155,10 @@ public class Netw_layerInteractor implements Runnable {
 	
 	@Override
 	public void run() {
+
+		Log.e("testWu","开始向aodv注册");
 		register2netw_layer();//注册
+		Log.e("testWu","注册成功");
 		byte[] check_b = new byte[16];
 		byte[] recvBuf = new byte[16];
 		byte[] srcip = new byte[5];
@@ -146,7 +168,9 @@ public class Netw_layerInteractor implements Runnable {
 			try {
 				DatagramPacket recvPacket = new DatagramPacket(recvBuf,
 						recvBuf.length);
+				Log.i("testWu","准备接受aodv的消息");
 				sock_interact_.receive(recvPacket);
+				Log.i("testWu","收到aodv的消息");
 				//此处要加入防止重复信息的机制
 				if (check_dup(recvBuf, check_b))
 					continue;
@@ -258,7 +282,7 @@ public class Netw_layerInteractor implements Runnable {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
+		} 
 	}
 	
 	/**

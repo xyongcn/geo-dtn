@@ -46,7 +46,7 @@ public class RouteTable{
 		/**
 		 * TAG for collaborating with Android built-in Logging system
 		 */
-		private static String TAG = "RouteTable_"; 
+		private String TAG = "RouteTable_"; 
 	    /**
 	     * Constructor based on the name of the router as String
 	     */

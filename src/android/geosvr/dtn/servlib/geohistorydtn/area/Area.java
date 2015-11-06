@@ -230,6 +230,7 @@ public class Area implements Serializable
 	
 	/**
 	 * 将本区域的频率向量移除计时器队列
+	 * 将本区域的频率向量的修改标识重置，这样即使这个区域再次移动进入了也不会出现不更新频率向量
 	 */
 	public void removeTimeCount()
 	{
@@ -237,6 +238,7 @@ public class Area implements Serializable
 		for(FrequencyVector vector:vectorlist)
 		{
 			TimeManager.getInstance().removeVectorListen(vector);
+			vector.resetChangeFVectorSign();//更新频率向量的修改标志位
 		}
 	}
 	

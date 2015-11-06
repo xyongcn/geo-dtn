@@ -36,7 +36,7 @@ public class DiscoveriesSetting {
 	 * The configurable address family
 	 */
 	public enum address_family_t {
-		IP("ip");
+		IP("ip"),AODV("aodv");
 		private static final Map<String, address_family_t> lookupCaption = new HashMap<String, address_family_t>();
 
 		static {

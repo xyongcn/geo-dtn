@@ -8,19 +8,19 @@ import java.io.FileWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import android.geosvr.dtn.servlib.bundling.BundleDaemon;
 import android.geosvr.dtn.servlib.conv_layers.DTNLocationProvider;
 import android.geosvr.dtn.servlib.conv_layers.Netw_layerInteractor;
-import android.geosvr.dtn.servlib.naming.EndpointID;
 import android.geosvr.dtn.systemlib.util.ByteHelper;
 import android.geosvr.dtn.systemlib.util.IByteBuffer;
 import android.geosvr.dtn.systemlib.util.IpHelper;
 import android.geosvr.dtn.systemlib.util.SerializableByteBuffer;
 import android.geosvr.dtn.systemlib.util.TimeHelper;
+import android.util.Log;
 
 public class PASVDiscovery {
 	
@@ -55,6 +55,9 @@ public class PASVDiscovery {
 	public HashMap<String, PASVExtraInfo> getPASVDiscoveriesList(){
 //		if (TimeHelper.current_seconds_from_ref() - last_set_time_ < list_live_time_sec)
 //			return this.PASVDiscoveries_;
+		
+		Log.e("testWu","发起获得获得邻居请求");
+		
 		
 		//清空邻居表
 		PASVDiscoveries_.clear();
@@ -109,6 +112,27 @@ public class PASVDiscovery {
 					neighborip[k] = recvBuf[k];
 					xb[k] = recvBuf[k + 4];
 					yb[k] = recvBuf[k + 8];
+					//大小端的问题，加入蔡冰莹的大小端判断
+					/*byte caiLongtitude[]=new byte[5];
+					byte caiLatitude[]=new byte[5];
+					if(ByteHelper.endian_test())//big endian
+					{
+						for (int tk = 0; tk < 4; tk++) {
+							neigh_lat[tk] = recvBuf[tk + 4];
+							neigh_lng[tk] = recvBuf[tk + 8];
+							dis[tk] = recvBuf[tk +12];
+						}
+					}
+					else {
+						
+						for (int k = 0; k < 4; k++) {
+							srcip[k] = recvBuf[k];
+						
+							neigh_lat[3-k] = recvBuf[k + 4];
+							neigh_lng[3-k] = recvBuf[k + 8];
+							dis[3-k] = recvBuf[k +12];
+						}
+					}*/
 				}
 				current_time = TimeHelper.getNanoTime();
 				String neighboripstr = IpHelper.ipbyte2ipstr(neighborip);
@@ -121,7 +145,11 @@ public class PASVDiscovery {
 //				System.out.println("22");
 			}
 			fw.close();
-		} catch (Exception e) {
+		}
+		catch (SocketTimeoutException e){
+			Log.w("TAG",String.format("socket time out:%ds", reply_wait_time_sec));
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			sock_find_neigh.close();
@@ -129,6 +157,15 @@ public class PASVDiscovery {
 		}
 		
 		last_set_time_ = TimeHelper.current_seconds_from_ref();
+		
+		if(PASVDiscoveries_.size()==0){
+			Log.e("testWu","没有或得到周围的DTN邻居");
+		}
+		for(PASVExtraInfo info:PASVDiscoveries_.values()){
+			Log.e("testWu",info.toString());
+		}
+		Log.e("testWu","获得获得邻居信息结束");
+		
 		return this.PASVDiscoveries_;
 	}
 	
@@ -137,12 +174,29 @@ public class PASVDiscovery {
 		if (buf.length < 11 )
 			return;
 		byte[] neighborip = new byte[5];
-		byte[] xb = new byte[5];
-		byte[] yb = new byte[5];
-		for (int k = 0; k < 4; k++) {
+		byte[] xb = new byte[4];
+		byte[] yb = new byte[4];
+		/*for (int k = 0; k < 4; k++) {
 			neighborip[k] = buf[k];
 			xb[k] = buf[k + 4];
 			yb[k] = buf[k + 8];
+			
+		}*/
+		if(ByteHelper.endian_test())//big endian
+		{
+			for (int tk = 0; tk < 4; tk++) {
+				neighborip[tk] = buf[tk];
+				xb[tk] = buf[tk + 4];
+				yb[tk] = buf[tk + 8];
+			}
+		}
+		else {
+			
+			for (int tk = 0; tk < 4; tk++) {
+				neighborip[tk] = buf[tk];
+				xb[3-tk] = buf[tk + 4];
+				yb[3-tk] = buf[tk + 8];
+			}
 		}
 		String neighboripstr = IpHelper.ipbyte2ipstr(neighborip);
 		int x = ByteHelper.byte_array_to_int(xb);
@@ -152,6 +206,40 @@ public class PASVDiscovery {
 		info.setLongitude(x/(Math.pow(10, DTNLocationProvider.accuracy)));
 		info.setLatitude(y/(Math.pow(10, DTNLocationProvider.accuracy)));
 		PASVDiscoveries_.put(IpHelper.ipstr2Idstr(neighboripstr), info);
+		
+		//检测大小端的经纬度判断
+		/*byte caiLongtitude[]=new byte[4];
+		byte caiLatitude[]=new byte[4];
+		if(ByteHelper.endian_test())//big endian
+		{
+			for (int tk = 0; tk < 4; tk++) {
+				caiLongtitude[tk] = buf[tk + 4];
+				caiLatitude[tk] = buf[tk + 8];
+			}
+		}
+		else {
+			
+			for (int tk = 0; tk < 4; tk++) {
+				caiLongtitude[3-tk] = buf[tk + 4];
+				caiLatitude[3-tk] = buf[tk + 8];
+			}
+		}
+		double dx = ByteHelper.byte_array_to_int(caiLongtitude);
+		double dy = ByteHelper.byte_array_to_int(caiLatitude);
+		dx/=Math.pow(10,DTNLocationProvider.accuracy);
+		dy/=Math.pow(10,DTNLocationProvider.accuracy);
+		Log.e("testWu",String.format("置换大小端的经纬度：(%f,%f)",dx,dy));
+		
+		StringBuilder str0=new StringBuilder();
+		StringBuilder str1=new StringBuilder();
+		StringBuilder str2=new StringBuilder();
+		for(int i=0;i<4;i++){
+			str0.append(String.format("%x ", buf[i]));
+			str1.append(String.format("%x ", buf[i+4]));
+			str2.append(String.format("%x ", buf[i+8]));
+		}
+		Log.e("testWu",String.format("收到的经纬度数据的二进制：(%s,%s,%s)",str0, str1,str2));
+		*/
 	}
 	
 	/**

@@ -4,7 +4,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
+
 public class FrequencyVectorManager {
+	private static String tag="FrequencyVectorManager";
 	
 	private static class SingleFrequencyVectorManager
 	{
@@ -18,15 +21,14 @@ public class FrequencyVectorManager {
 	
 	public FrequencyVectorManager()
 	{
+		hourvectorlist=new LinkedList<FrequencyVector>();
+		weekvectorlist=new LinkedList<FrequencyVector>();
+		monthvectorlist=new LinkedList<FrequencyVector>();
 		init();
 	}
 	
 	private void init()
 	{
-		hourvectorlist=new LinkedList<FrequencyVector>();
-		weekvectorlist=new LinkedList<FrequencyVector>();
-		monthvectorlist=new LinkedList<FrequencyVector>();
-//		hourvectorlist=new LinkedList<FrequencyVector>();
 	}
 	
 	/**
@@ -42,11 +44,13 @@ public class FrequencyVectorManager {
 	 */
 	public void hourAttenuation()
 	{
+		GeohistoryLog.i(tag, "All Frequency Vector Attenuation:"+hourvectorlist.size());
 		Iterator<FrequencyVector> iter=hourvectorlist.iterator();
 		while(iter.hasNext())
 		{
 			FrequencyVector vector=iter.next();
 			vector.attenuationVector();
+			GeohistoryLog.v(tag, "Frequency Vector Attenuation");
 		}
 	}
 	public void weekAttenuation()
@@ -77,6 +81,8 @@ public class FrequencyVectorManager {
 	 */
 	public FrequencyVector newFVector(int vectorLevel,int serviceType)
 	{
+		GeohistoryLog.i(tag, String.format("FrequencyVectorManager create new Frequency vector,hourlistsize:%d,weeklistsize:%d,monthlistsize:%d"
+				,hourvectorlist.size(),weekvectorlist.size(),monthvectorlist.size()));
 		FrequencyVector vector;
 		if(vectorLevel==FrequencyVectorLevel.hourVector)
 		{
@@ -99,5 +105,35 @@ public class FrequencyVectorManager {
 		}
 		
 		return vector;
+	}
+	
+	/**
+	 * 针对从文件中读取到的区域的频率向量或者邻居频率向量，将其添加到向量列表中
+	 */
+	public void addFVector(FrequencyVector vector){
+		//根据要添加的频率向量的级别来添加
+		switch(vector.vectorLevel){
+		case FrequencyVectorLevel.hourVector:
+			hourvectorlist.add(vector);
+			break;
+			
+		case FrequencyVectorLevel.weekVector:
+			weekvectorlist.add(vector);
+			break;
+			
+		case FrequencyVectorLevel.monthVector:
+			monthvectorlist.add(vector);
+			break;
+		}
+	}
+	
+	/**
+	 * 对频率向量管理器所存储的频率向量引用清空
+	 */
+	public void shutdown(){
+		
+		hourvectorlist.clear();
+		weekvectorlist.clear();
+		monthvectorlist.clear();
 	}
 }

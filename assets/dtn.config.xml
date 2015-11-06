@@ -41,14 +41,17 @@
     </tns:RoutesSetting>
 
     <tns:DiscoveriesSetting>
-        <!--  Setup your Discovery here -->
-        <!--<tns:Discovery id="ipdisc0" address_family="ip" port="9556"></tns:Discovery>
-        <tns:Announce interface_id="tcp0" discovery_id="ipdisc0"
+        <!-- 利用ip进行主动请求邻居 -->
+        <!-- <tns:Discovery id="ipdisc0" address_family="ip" port="9556"></tns:Discovery>  -->
+        <!-- <tns:Announce interface_id="tcp0" discovery_id="ipdisc0"
+            conv_layer_type="tcp"></tns:Announce>  -->
+        
+        <!-- 利用aodv进行发现DTN的邻居 -->
+        <tns:Discovery id="aodvDiscovery" address_family="aodv" port="-1"></tns:Discovery>
+		<tns:Announce interface_id="tcp0" discovery_id="aodvDiscovery"
             conv_layer_type="tcp"></tns:Announce>
-         -->
-        <tns:Discovery id="ipdisc0" address_family="ip" port="9556"></tns:Discovery>
-        <tns:Announce interface_id="tcp0" discovery_id="ipdisc0"
-            conv_layer_type="tcp"></tns:Announce>
+		
     </tns:DiscoveriesSetting>
+
 
 </tns:DTNConfiguration>

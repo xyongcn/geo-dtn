@@ -37,7 +37,6 @@ public class Neighbour implements Serializable
 	NeighbourArea neighbourArea=null;
 	
 	Neighbour(EndpointID eid) {
-		// TODO Auto-generated constructor stub
 		this.neighbourEid=eid;
 		int serviceType=FrequencyVectorServiceType.NEIGHBOUR;
 		this.hourvector=(HourFrequencyVector)FrequencyVectorManager.getInstance().newFVector(FrequencyVectorLevel.hourVector, serviceType);
@@ -58,7 +57,8 @@ public class Neighbour implements Serializable
 		{
 			neighbourArea=new NeighbourArea(neighbourEid);
 		}
-		neighbourArea.updateArea(payload);
+		else
+			neighbourArea.updateArea(payload);
 	}
 	
 	/**
@@ -67,7 +67,6 @@ public class Neighbour implements Serializable
 	public void init()
 	{
 		neighbourArea=new NeighbourArea(neighbourEid);
-//		neighbourArea
 	}
 	
 	public NeighbourArea getNeighbourArea()
@@ -86,7 +85,7 @@ public class Neighbour implements Serializable
 	}
 	
 	/**
-	 * 将频率向量加入到计时器中
+	 * 将频率向量加入到计时器中(没有被调用，应该需要添加)
 	 */
 	public void addTimeCount()
 	{

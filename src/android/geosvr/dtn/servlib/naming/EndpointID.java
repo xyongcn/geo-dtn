@@ -532,36 +532,36 @@ public class EndpointID implements Serializable {
 		valid_  = false;
 		try{
 		
-		
-		if (!is_able_to_create_URI(uri_.toString()))
-		{
-			Log.d(TAG,"EndpointID::validate: invalid URI");
-			return false;
-		}
-		
-		
-		
-		if (scheme_str().length() > MAX_EID_PART_LENGTH) {
-	        Log.e(TAG , "scheme name is too large > " +  MAX_EID_PART_LENGTH);
-	        valid_ = false;
-	        return false;
-	    }
-	    
-	    if (ssp().length() > MAX_EID_PART_LENGTH) {
-	    	Log.e(TAG, "ssp is too large (>" +  MAX_EID_PART_LENGTH);
-	        valid_ = false;
-	        return false;
-	    }
-
-	    valid_ = true;
-
-	    scheme_ = SchemeTable.getInstance().lookup(uri_.getScheme());
-	    if (scheme_ != null) {
-	        valid_ = scheme_.validate(uri_, is_pattern_);
-	    }
-	    else valid_ = false;
-	     
-	  
+			
+			if (!is_able_to_create_URI(uri_.toString()))
+			{
+				Log.d(TAG,"EndpointID::validate: invalid URI");
+				return false;
+			}
+			
+			
+			
+			if (scheme_str().length() > MAX_EID_PART_LENGTH) {
+		        Log.e(TAG , "scheme name is too large > " +  MAX_EID_PART_LENGTH);
+		        valid_ = false;
+		        return false;
+		    }
+		    
+		    if (ssp().length() > MAX_EID_PART_LENGTH) {
+		    	Log.e(TAG, "ssp is too large (>" +  MAX_EID_PART_LENGTH);
+		        valid_ = false;
+		        return false;
+		    }
+	
+		    valid_ = true;
+	
+		    scheme_ = SchemeTable.getInstance().lookup(uri_.getScheme());
+		    if (scheme_ != null) {
+		        valid_ = scheme_.validate(uri_, is_pattern_);
+		    }
+		    else valid_ = false;
+		     
+		  
 
 		}
 		catch (NullPointerException e)

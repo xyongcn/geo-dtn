@@ -9,6 +9,7 @@ import android.geosvr.dtn.servlib.geohistorydtn.config.AttenuationConfig;
  * @author wwtao thedevilking@qq.com: 
  * @version 创建时间：2015-5-5 上午11:37:50 
  * 说明 ：时间区域频率向量的基类
+ * 将向量的增加标志位的清除放在了衰减函数attenuationVector里面
  */
 public abstract class FrequencyVector implements Serializable{
 
@@ -77,7 +78,7 @@ public abstract class FrequencyVector implements Serializable{
 	}
 	
 	/**
-	 * 对更换区域时，处理当前时间段的向量进行处理
+	 * 对更换区域时，处理当前时间段的向量进行处理；因为Info里面存放的包括改变区域时的时间，所以要根据这个info里面的时间来比较需要修改哪一维的频率向量
 	 */
 	public abstract void changeVector(AreaInfo info);
 	
@@ -98,6 +99,14 @@ public abstract class FrequencyVector implements Serializable{
 			vector[i]=vector[i]*parameter;
 		}
 		
+		resetChangeFVectorSign();
+	}
+	
+	/**
+	 * 重置修改频率向量的修改标志位，这个在区域移动，重置衰减时间
+	 */
+	public void resetChangeFVectorSign(){
+
 		//清楚修改标志位
 		for(int i=0;i<vectorChange.length;i++)
 		{

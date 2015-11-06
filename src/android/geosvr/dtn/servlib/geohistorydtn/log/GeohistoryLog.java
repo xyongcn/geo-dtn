@@ -16,28 +16,39 @@ import android.util.Log;
  * @version 创建时间：2015-6-29 下午1:19:16 
  * 说明 
  */
-public class GeohistoryLog extends Thread
+public class GeohistoryLog implements Runnable
 {
 	private static String logfile="/sdcard/geoHistory_dtn/GeohistoryLog.txt";
+	private static String tag="GeohistoryLog";
 	
 	BlockingQueue<String> queue;//写入日志文件内容的队列
 	BufferedOutputStream output=null;
 	
+	boolean isrunning=false;//线程是否运行
+	boolean shutdown=false;//是否需要关闭线程
 	
 	private static class SingleGeohistoryLog
 	{
 		static GeohistoryLog Instance=new GeohistoryLog();
 	}
 	
-	private static GeohistoryLog getInstance()
+	public static GeohistoryLog getInstance()
 	{
-		return SingleGeohistoryLog.Instance;
+		GeohistoryLog ins= SingleGeohistoryLog.Instance;
+		
+		//确保写入日志的线程始终是正常运行的
+		if(!ins.isrunning){
+			(new Thread(ins)).start();
+		}
+		return ins;
 	}
 	
-	public GeohistoryLog()
+	private GeohistoryLog()
 	{
 		queue=new LinkedBlockingDeque<String>();
-		output=getOutputStream();
+		if(output==null){
+			output=getOutputStream();
+		}
 	}
 	
 	//获取对日志文件读写的流
@@ -49,6 +60,9 @@ public class GeohistoryLog extends Thread
 		if(!file.exists())
 		{
 			try {
+				if(!file.getParentFile().isDirectory())
+					file.getParentFile().mkdirs();
+				
 				file.createNewFile();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -68,12 +82,17 @@ public class GeohistoryLog extends Thread
 	
 	@Override
 	public void run() {
+		isrunning=true;
+		shutdown=false;//重置关闭的标志位
 		while(true)
 		{
-			if(!DTNService.is_running())
+			//根据DTN服务
+			/*if(!DTNService.is_running())
 			{
 				break;
-			}
+			}*/
+			if(shutdown)
+				break;
 			
 			try {
 				String line=queue.take();
@@ -96,14 +115,22 @@ public class GeohistoryLog extends Thread
 			}
 		}
 		try {
-			output.close();
+			if(output!=null)
+				output.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		output=null;
+		isrunning=false;
 	}
 	
+	public void shutdown(){
+		shutdown=true;
+		i(tag,"GeohistoryLog thread shutdown");
+	}
+	
+	//加到要写入的日志队列中
 	private static void putSting2Queue(String tag,String s)
 	{
 		try {

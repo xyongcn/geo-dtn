@@ -38,4 +38,10 @@ public class PASVExtraInfo {
 		this.nexthop = nexthop;
 	}
 
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		String s=String.format("neighbour:%s(%f,%f)", nexthop,longitude,latitude);
+		return s;
+	}
 }

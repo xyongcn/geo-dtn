@@ -113,9 +113,15 @@ public abstract class Discovery {
 		list_ = new AnnouncementList();
 
 		Discovery disc;
+		//普通的利用ip主动的邻居发现
 		if (afname == "ip") {
 			disc = new IPDiscovery(name, port);
-		} else {
+		}
+		//利用aodv进行邻居发现
+		else if (afname.equals("aodv")){
+			disc = new AODVDiscovery(name, port);
+		}
+		else {
 			// not a recognized address family
 			Log.e(TAG, "unknown address family");
 			disc = null;

@@ -5,8 +5,10 @@ import java.util.HashMap;
 import android.app.Activity;
 import android.geosvr.dtn.DTNManager;
 import android.geosvr.dtn.R;
+import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocation;
 import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocationFromScript;
 import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.CurrentLocationFromScript.AreaDivision;
+import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -46,7 +48,15 @@ public class DTNSelectArea extends Activity
 		//设置列表
 		listview=(ListView)findViewById(R.id.dtnapps_selectarea_neighbourarea_listview);
 		
-		final CurrentLocationFromScript current=(CurrentLocationFromScript)DTNManager.getInstance().currentLocation;
+//		CurrentLocation tempCurrent=DTNManager.getInstance().currentLocation;
+		CurrentLocation tempCurrent=null;
+		if(!(tempCurrent instanceof CurrentLocationFromScript)){
+			GeohistoryLog.e(tag, "CurrentLoaction.getInstance().currentLocation is null,不能使用模拟的区域移动变化");
+			this.finish();
+			return;
+		}
+		
+		final CurrentLocationFromScript current=(CurrentLocationFromScript)tempCurrent;
 		
 		
 		final Object[] areaarray=current.getNeighbourArea();

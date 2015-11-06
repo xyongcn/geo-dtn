@@ -37,6 +37,7 @@ import java.util.Map;
 
 import android.geosvr.dtn.DTNManager;
 import android.geosvr.dtn.servlib.bundling.BundleDaemon;
+import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
 import android.geosvr.dtn.servlib.naming.EndpointID;
 import android.geosvr.dtn.systemlib.util.IByteBuffer;
 import android.geosvr.dtn.systemlib.util.SerializableByteBuffer;
@@ -344,7 +345,7 @@ public class IPDiscovery extends Discovery implements Runnable {
 									buf.put(name);
 
 									//加入同一区域的验证信息
-									buf.putInt(DTNManager.getInstance().currentLocation.getAreaNum());
+//									buf.putInt(DTNManager.getInstance().currentLocation.getAreaNum());
 									
 									int l = hdr.length();
 									data = new byte[l];
@@ -423,7 +424,7 @@ public class IPDiscovery extends Discovery implements Runnable {
 				bb.get(name);
 				
 				//接受同一区域的验证信息
-				int areanum=bb.getInt();
+//				int areanum=bb.getInt();
 				
 				String sender_name = new String(name);
 				hdr.set_sender_name(sender_name);
@@ -446,10 +447,10 @@ public class IPDiscovery extends Discovery implements Runnable {
 				Log.i(TAG, "nexthop="+nexthop);
 				Log.i(TAG, "remote_eid.uri="+remote_eid.uri());*/
 				
-				Log.v("TESTE","receive from"+remote_eid.toString()+" areanum"+String.valueOf(areanum));
+//				Log.v("TESTE","receive from"+remote_eid.toString()+" areanum"+String.valueOf(areanum));
 				//用来判断是不是在同一个区域
-				if(areanum!=0 && areanum==DTNManager.getInstance().currentLocation.getAreaNum())
-				{
+				/*if(areanum!=0 && areanum==DTNManager.getInstance().currentLocation.getAreaNum())
+				{*/
 					
 					BundleDaemon BD = BundleDaemon.getInstance();
 					//判断是否是本节点，如果是本节点则不作处理
@@ -460,12 +461,13 @@ public class IPDiscovery extends Discovery implements Runnable {
 						// distribute to all beacons registered for this CL type
 //						Log.i("TESTE","正常通信");
 						handle_neighbor_discovered(Type, nexthop, remote_eid);
+						GeohistoryLog.v(TAG, String.format("收到IPDiscovery的消息，Type：%s, nexthop:%s, remote_eid:%s",Type,nexthop,remote_eid.toString()));
 					}
-				}
+				/*}
 				else
 				{
 //					Log.i("TESTE","不在同一区域");
-				}
+				}*/
 
 			} catch (Exception e) {
 //				e.printStackTrace();
@@ -496,7 +498,6 @@ public class IPDiscovery extends Discovery implements Runnable {
 	 */
 	@Override
 	public void start() {
-
 		thread_.start();
 	}
 

@@ -24,7 +24,7 @@ import android.util.Log;
 /** 
  * @author wwtao thedevilking@qq.com: 
  * @version 创建时间：2015-7-2 下午2:42:15 
- * 说明 
+ * 说明  : 记录一个邻居所到过的所有区域的信息，区域的频率信息
  */
 public class NeighbourArea 
 {
@@ -69,7 +69,7 @@ public class NeighbourArea
 	//利用已有的
 	
 	/**
-	 * 利用本地文件来更新
+	 * 利用本地文件来更新，读取eid所对应的区域文件，然后添加到对应的Area列表中
 	 */
 	private void init()
 	{

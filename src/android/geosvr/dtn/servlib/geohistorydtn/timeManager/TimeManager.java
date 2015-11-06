@@ -61,18 +61,18 @@ public class TimeManager
 		
 		resetTime();
 		
-		//初始化
-		init();
-	}
-	
-	public void init()	
-	{
 		hourFVectorQueue=new LinkedBlockingDeque<FrequencyVector>();
 		weekFVectorQueue=new LinkedBlockingDeque<FrequencyVector>();
 		monFVectorQueue=new LinkedBlockingDeque<FrequencyVector>();
 		/*hourFVectorQueue=new LinkedBlockingDeque<FrequencyVector>();
 		weekFVectorQueue=new LinkedBlockingDeque<FrequencyVector>();
 		monFVectorQueue=new LinkedBlockingDeque<FrequencyVector>();*/
+		
+	}
+	
+	//每初次运行计时功能时，都要调用的代码
+	public void init()	
+	{
 		
 		//初次启用计时代码
 		timeTaskRun=true;
@@ -93,7 +93,7 @@ public class TimeManager
 		monthDayNum=configTime.get(Calendar.MONTH);//月的范围是0-12
 	}
 	
-	public void destroy()
+	public void shutdown()
 	{
 		//关闭计时器的调用
 		timeTaskRun=false;
@@ -212,7 +212,6 @@ public class TimeManager
 	{
 		//日志输出及提示信息
 		Log.i(tag,getTimeNow()+"\t触发小时操作");
-		AreaManager.writeAreaTimeChange2Log(getSimplifyTime());
 		
 		for(FrequencyVector vector:hourFVectorQueue)
 		{
@@ -221,6 +220,9 @@ public class TimeManager
 		
 		//对所有的需要小时衰减的向量进行
 		FrequencyVectorManager.getInstance().hourAttenuation();
+		
+		//写入时间区域频率向量随时间的变化
+		AreaManager.writeAreaTimeChange2Log(getSimplifyTime());
 		
 		//将历史区域向量记录到文件中
 		AreaManager.getInstance().wrieteAreaInfoToFile();

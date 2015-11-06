@@ -15,5 +15,10 @@ public interface CurrentLocation
 {
 //	public int[] getAreaLayer();
 	
+	/**
+	 * 说明：对于从脚本进行区域的模拟，这里获取的是最底层区域的编码，
+	 * 针对模拟器以及地图版本，这里获取是它们最底层的区域编码。由于区域的编码都是唯一的，所以一旦最底层区域编码不一致，那么就一定不再同一个区域
+	 * @return
+	 */
 	public int getAreaNum();
 }

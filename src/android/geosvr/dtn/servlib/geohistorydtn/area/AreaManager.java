@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVector;
+import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorManager;
 import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
 import android.util.Log;
 
@@ -39,12 +41,13 @@ public class AreaManager
 	 */
 	private AreaManager()
 	{
-		init();
+		areaMap=new HashMap<String, Area>(500);
+		//需要通过每次使用前使用init
+//		init();
 	}
 	
-	private void init()	
+	public void init()	
 	{
-		areaMap=new HashMap<String, Area>(500);
 
 		File file=new File("/sdcard/geoHistory_dtn/historyarea");
 		//从文件中读取历史的区域信息
@@ -59,9 +62,13 @@ public class AreaManager
 				{
 					if(obj instanceof Area)
 					{
+						//将读取到的area保存起来
 						Area area=(Area)obj;
 						String s=area.level+"#"+area.id;
 						areaMap.put(s, area);
+						
+						//将读取到的area的频率向量加入到频率向量管理器中
+						addAreaFVector2Manager(area);
 					}
 				}
 				in.close();
@@ -80,6 +87,16 @@ public class AreaManager
 			GeohistoryLog.i(tag,"读取本节点的历史区域文件有错，ClassNotFoundException");
 			
 			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 将area中的所有频率向量添加到频率向量管理器中，这样从文件中读取区域时，频率向量的衰减器也可以对其进行频率的衰减了
+	 * @param area
+	 */
+	private void addAreaFVector2Manager(Area area){
+		for(FrequencyVector vector:area.vectorlist){
+			FrequencyVectorManager.getInstance().addFVector(vector);
 		}
 	}
 	
@@ -121,9 +138,10 @@ public class AreaManager
 				
 				arealist.add(a);
 			}
-			//如果存在不合格的level，那么久不需要
+			//如果存在不合格的level，那么就不需要
 			else
 			{
+				GeohistoryLog.e(tag, String.format("areainfo的lever(%d)不合法", level));
 				valid=false;
 				break;
 			}
@@ -202,12 +220,17 @@ public class AreaManager
 				
 				areamovingLog=new BufferedOutputStream(new FileOutputStream(file, false));
 			}
-			String temp;
-			if(area!=null)
-				temp=reason +area.toString();
+			StringBuilder temp=new StringBuilder();
+			if(area!=null){
+				temp.append(reason+":\n");
+				do{
+					temp.append(area.toString()+"\n");
+					area=area.fatherArea;
+				}while(area!=null);
+			}
 			else
-				temp=reason+"null";
-			areamovingLog.write(temp.getBytes());
+				temp.append(reason+":\nnull");
+			areamovingLog.write(temp.toString().getBytes());
 			areamovingLog.flush();
 		}
 		catch (IOException e)
@@ -241,6 +264,13 @@ public class AreaManager
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * 清空已经有的区域信息
+	 */
+	public void shutdown(){
+		areaMap.clear();
 	}
 	
 	//获取位置以及改变位置的流程

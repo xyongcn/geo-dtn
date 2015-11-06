@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import android.geosvr.dtn.servlib.geohistorydtn.config.NeibhourConfig;
+import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
 import android.geosvr.dtn.servlib.naming.EndpointID;
 
 /** 
@@ -15,7 +16,7 @@ import android.geosvr.dtn.servlib.naming.EndpointID;
  */
 public class NeighbourManager {
 	
-	
+	private static String tag="NeighbourManager";
 	
 	/**
 	 * 历史邻居的表
@@ -55,6 +56,7 @@ public class NeighbourManager {
 		{
 			nei=new Neighbour(eid);
 			neighbourlist.put(eid.toString(), nei);
+			GeohistoryLog.i(tag, String.format("添加新的邻居%s",eid.toString()));
 		}
 		//更改频率向量
 		nei.checkVectorChange();

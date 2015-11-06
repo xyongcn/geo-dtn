@@ -147,7 +147,7 @@ public class DiscoveryTable {
 			return false;
 		}
 
-		Log.i(TAG, "adding discovery agent" + name);
+		Log.i(TAG, "adding discovery agent: " + name);
 
 		dlist_.add(disc);
 		return true;
@@ -209,6 +209,7 @@ public class DiscoveryTable {
 		// iter = dlist_.iterator();
 		while (iter.hasNext()) {
 			disc = iter.next();
+			Log.i(TAG, String.format("Discovery find: disc name :%s",disc.name()));
 			if (disc.name().equals(name))
 				return disc;
 		}
