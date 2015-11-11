@@ -154,6 +154,12 @@ public class GeohistoryLog implements Runnable
 		putSting2Queue(tag, s);
 	}
 	
+	public static void w(String tag,String s)
+	{
+		Log.w(tag,s);
+		putSting2Queue(tag, s);
+	}
+	
 	public static void d(String tag,String s)
 	{
 		Log.d(tag,s);

@@ -54,6 +54,7 @@ import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.questAr
 import android.geosvr.dtn.servlib.geohistorydtn.areaConnectiveSimulation.questAreaInfo.QuestAreaInfo;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorManager;
 import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
+import android.geosvr.dtn.servlib.geohistorydtn.neighbour.NeighbourManager;
 import android.geosvr.dtn.servlib.geohistorydtn.timeManager.TimeManager;
 import android.geosvr.dtn.servlib.storage.BundleStore;
 import android.geosvr.dtn.servlib.storage.GlobalStorage;
@@ -374,6 +375,8 @@ public class DTNManager extends Activity  {
 		TimeManager.getInstance().init();
 		//区域管理器从文件读入已有的历史区域
 		AreaManager.getInstance().init();
+		//从文件中读入初始化历史邻居向量
+		NeighbourManager.getInstance().init();//调试阶段，不用从文件中读取想要的历史邻居记录
 		//测试读取DTN连通数据
 		try {
 //			currentLocation=new CurrentLocationFromScript(this);
@@ -1234,6 +1237,7 @@ public class DTNManager extends Activity  {
 		AreaManager.getInstance().shutdown();
 		
 		//关闭邻居的管理器
+		NeighbourManager.getInstance().shutdown();
 		
 		//关闭log的相关信息
 		GeohistoryLog.getInstance().shutdown();

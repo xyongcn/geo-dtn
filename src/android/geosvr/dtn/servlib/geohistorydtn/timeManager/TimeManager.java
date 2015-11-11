@@ -13,6 +13,7 @@ import android.geosvr.dtn.servlib.geohistorydtn.config.FrequencyConfig;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVector;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorLevel;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorManager;
+import android.geosvr.dtn.servlib.geohistorydtn.neighbour.NeighbourManager;
 import android.util.Log;
 
 /** 
@@ -226,6 +227,9 @@ public class TimeManager
 		
 		//将历史区域向量记录到文件中
 		AreaManager.getInstance().wrieteAreaInfoToFile();
+		
+		//测试 将邻居的频率向量全部显示出来
+		NeighbourManager.getInstance().printAllNeighbour();
 	}
 	
 	//每星期需要出发的操作

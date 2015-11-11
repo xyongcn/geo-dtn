@@ -122,7 +122,8 @@ public class EndpointIDPattern extends EndpointID {
     		if(this.equals(eid) )
     			return true;
 
-    		return eid.str().trim().startsWith(this.toString().trim().replaceAll("\\*", ""));
+//    		return eid.str().trim().startsWith(this.toString().trim().replaceAll("\\*", ""));
+    		return eid.str().trim().startsWith(this.toString().trim().replaceAll("/*\\*", ""));//匹配的时候去掉前面的'/'*
     	}
     	else
     	{

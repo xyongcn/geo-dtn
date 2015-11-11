@@ -24,6 +24,8 @@ import android.util.Log;
 public class AreaManager 
 {
 	private static String tag="AreaManager";
+	private static String historyAreaFilePath="/sdcard/geoHistory_dtn/historyarea.obj";
+	private static String historyAreaMovingFilePath="/sdcard/dtn_test_data/areamoving.log";
 	
 	private static class SingleAreaManager
 	{
@@ -174,7 +176,7 @@ public class AreaManager
 				// TODO Auto-generated method stub
 				try
 				{
-					File file=new File("/sdcard/geoHistory_dtn/historyarea");
+					File file=new File(historyAreaFilePath);
 					if(!file.getParentFile().exists())
 						file.getParentFile().mkdirs();
 					if(!file.exists())
@@ -212,7 +214,7 @@ public class AreaManager
 		{
 			if(areamovingLog==null)
 			{
-				File file=new File("/sdcard/dtn_test_data/areamoving.log");
+				File file=new File(historyAreaMovingFilePath);
 				if(!file.getParentFile().exists())
 					file.getParentFile().mkdir();
 				if(!file.exists())
@@ -248,7 +250,7 @@ public class AreaManager
 		{
 			if(areamovingLog==null)
 			{
-				File file=new File("/sdcard/dtn_test_data/areamoving.log");
+				File file=new File(historyAreaMovingFilePath);
 				if(!file.getParentFile().exists())
 					file.getParentFile().mkdir();
 				if(!file.exists())
@@ -270,6 +272,13 @@ public class AreaManager
 	 * 清空已经有的区域信息
 	 */
 	public void shutdown(){
+		//测试验证结果正确性,在结束的时候将本节点的所有的区域移动规律打印出来
+		GeohistoryLog.i(tag, "退出AreaManager时，打印本节点的移动规律");
+		int i=1;
+		for(Area area:areaMap.values()){
+			GeohistoryLog.d(tag,String.format("第%d个区域的移动规律：\n%s",i++,area.toString()));
+		}
+		
 		areaMap.clear();
 	}
 	

@@ -328,11 +328,13 @@ public class Area implements Serializable
 				break;
 				
 			case FrequencyVectorLevel.weekVector:
+				s+="\n";
 				s+=String.format("weekVector:(%s),", vector.toString());
 				break;
 				
 			case FrequencyVectorLevel.monthVector:
-				s+=String.format("monthVector:(%s),", vector.toString());
+				s+="\n";
+				s+=String.format("monthVector:(%s)", vector.toString());
 				break;
 			}
 		}

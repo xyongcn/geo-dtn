@@ -3,8 +3,10 @@ package android.geosvr.dtn.servlib.geohistorydtn.neighbour;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,8 +28,13 @@ import android.util.Log;
  * @version 创建时间：2015-7-2 下午2:42:15 
  * 说明  : 记录一个邻居所到过的所有区域的信息，区域的频率信息
  */
-public class NeighbourArea 
+public class NeighbourArea implements Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private final static String tag="NeighbourArea";
 	
 	/**
@@ -83,33 +90,27 @@ public class NeighbourArea
 		{
 			try
 			{
-				if(neighbourAreaFile.exists())
+				Log.i(tag,"从文件historyarea中读取历史的区域信息");
+				updateArea(neighbourAreaFile);
+				
+				//从别的地方已经使用了
+				/*ObjectInputStream in=new ObjectInputStream(new FileInputStream(neighbourAreaFile));
+				Object obj=null;
+				while((obj=in.readObject())!=null)
 				{
-					Log.i(tag,"从文件historyarea中读取历史的区域信息");
-					ObjectInputStream in=new ObjectInputStream(new FileInputStream(neighbourAreaFile));
-					Object obj=null;
-					while((obj=in.readObject())!=null)
+					if(obj instanceof Area)
 					{
-						if(obj instanceof Area)
-						{
-							Area area=(Area)obj;
-							String s=area.getAreaLevel()+"#"+area.getAreaId();
-							areaMap.put(s, area);
-						}
+						Area area=(Area)obj;
+						String s=area.getAreaLevel()+"#"+area.getAreaId();
+						areaMap.put(s, area);
 					}
-					in.close();
 				}
-				/*for(Area area:areaMap.values())
-				{
-					out.writeObject(area);
-				}
-				out.close();*/
+				in.close();*/
 			}
 			catch(IOException e)
 			{
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
 				GeohistoryLog.i(tag,"读取邻居的历史区域文件有错，ClassNotFoundException");
 				
 				e.printStackTrace();
@@ -134,8 +135,12 @@ public class NeighbourArea
 		}
 		
 		try {
-			ByteArrayInputStream bin=new ByteArrayInputStream(payload.memory_buf());
-			ObjectInputStream oin=new ObjectInputStream(bin);
+			//利用将payload里面的对象直接读取出来的方式不可行，由于锁的原因，无法直接通过内存的读写，只好使用
+//			byte[] buffer=new byte[payload.length()];
+//			payload.read_data(0, buffer.length, buffer);
+//			ByteArrayInputStream bin=new ByteArrayInputStream(payload.memory_buf());
+//			ByteArrayInputStream bin=new ByteArrayInputStream(buffer);
+			/*ObjectInputStream oin=new ObjectInputStream(bin);
 			
 			Object obj=null;
 			while((obj=oin.readObject())!=null)
@@ -149,7 +154,7 @@ public class NeighbourArea
 			}
 			oin.close();
 			bin.close();
-			
+			*/
 			//将文件保存到本地
 			File neighAreaFileDir=new File(NeibhourConfig.NEIGHBOURAREAFILEDIR);
 			if(!neighAreaFileDir.exists())
@@ -164,27 +169,65 @@ public class NeighbourArea
 			}
 			neighAreaFile.createNewFile();
 			
-			//将邻居的区域记录保存到本地
-			GeohistoryLog.i(tag, String.format("write neighbour %s area payload to the file", eid));
+			//将邻居的区域记录保存到本地，利用payload里面原有的方法
+			GeohistoryLog.i(tag, String.format("将邻居（ %s）发来的payload里面的区域移动规律存储到文件中", eid));
 			payload.copy_to_file(neighAreaFile);
-		} catch (BundleLockNotHeldByCurrentThread e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			
+			/*Log.i(tag,"利用payload刚存入的邻居的区域信息来更新内存中邻居的区域移动规律");
+			ObjectInputStream in=new ObjectInputStream(new FileInputStream(neighAreaFile));
+			Object obj=null;
+			while((obj=in.readObject())!=null)
+			{
+				if(obj instanceof Area)
+				{
+					Area area=(Area)obj;
+					String s=area.getAreaLevel()+"#"+area.getAreaId();
+					areaMap.put(s, area);
+				}
+			}
+			in.close();*/
+			updateArea(neighAreaFile);
+			
 		} catch (StreamCorruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e){
 			e.printStackTrace();
 		}
 	}
 	
-	public void updateArea(BundlePayload payload)
+	/**
+	 * 由于不能解决利用payload里面的内存更新邻居的区域频率信息，暂时弃用这个函数
+	 * @param payload
+	 */
+	/*public void updateArea(BundlePayload payload)
 	{
 		init(neighbourEID.toString(),payload);
+	}*/
+	
+	/**
+	 * 利用邻居区域移动频率的文件来更新频率文件
+	 * @param payloadFile
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
+	 * @throws StreamCorruptedException 
+	 * @throws ClassNotFoundException 
+	 */
+	public void updateArea(File payloadFile) throws StreamCorruptedException, FileNotFoundException, IOException, ClassNotFoundException{
+		Log.i(tag,"利用payloadFile来更新内存中邻居的区域移动规律");
+		ObjectInputStream in=new ObjectInputStream(new FileInputStream(payloadFile));
+		Object obj=null;
+		while((obj=in.readObject())!=null)
+		{
+			if(obj instanceof Area)
+			{
+				Area area=(Area)obj;
+				String s=area.getAreaLevel()+"#"+area.getAreaId();
+				areaMap.put(s, area);
+			}
+		}
+		in.close();
 	}
 	
 	/*public static boolean payload_to_neighbourAreaFile(EndpointID eid,File file)
@@ -269,7 +312,7 @@ public class NeighbourArea
 	 */
 	public Area checkArea(Area area)
 	{
-		String areastr=String.valueOf(area.getAreaId())+"#"+String.valueOf(area.getAreaId());
+		String areastr=String.valueOf(area.getAreaLevel())+"#"+String.valueOf(area.getAreaId());
 		
 		return areaMap.get(areastr);
 	}

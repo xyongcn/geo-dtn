@@ -142,4 +142,16 @@ public class AreaInfo {
 		
 		return true;
 	}
+	
+	/**
+	 * 返回默认的区域分层信息，由于是默认的，所以一般作为邻居间交换区域信息时，填充使用
+	 * @return
+	 */
+	public static int[] defaultAreaId(){
+		int id[]=new int[4];
+		for(int i=0;i<id.length;i++){
+			id[i]=-1;
+		}
+		return  id;
+	}
 }

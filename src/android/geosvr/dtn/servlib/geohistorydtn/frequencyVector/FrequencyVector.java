@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaInfo;
 import android.geosvr.dtn.servlib.geohistorydtn.config.AttenuationConfig;
+import android.geosvr.dtn.servlib.geohistorydtn.config.DisplayConfig;
 
 /** 
  * @author wwtao thedevilking@qq.com: 
@@ -121,7 +122,7 @@ public abstract class FrequencyVector implements Serializable{
 		
 		for(int i=1;i<vector.length;i++)
 		{
-			s+=":"+vector[i];
+			s+=":"+DisplayConfig.decimalFormat.format(vector[i]);
 		}
 		
 		return s;
