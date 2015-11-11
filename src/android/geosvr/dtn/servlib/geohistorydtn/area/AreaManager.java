@@ -24,7 +24,7 @@ import android.util.Log;
 public class AreaManager 
 {
 	private static String tag="AreaManager";
-	private static String historyAreaFilePath="/sdcard/geoHistory_dtn/historyarea.obj";
+	public static String historyAreaFilePath="/sdcard/geoHistory_dtn/historyarea.obj";
 	private static String historyAreaMovingFilePath="/sdcard/dtn_test_data/areamoving.log";
 	
 	private static class SingleAreaManager

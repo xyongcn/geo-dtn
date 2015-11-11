@@ -237,7 +237,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		nei.addTimeCount();//添加当前邻居的计时器
 		
 //		b)	触发邻居之间交换信息的bundle发送,发送本节点的历史区域信息
-		File file=new File("/sdcard/geoHistory_dtn/historyarea");
+		File file=new File(AreaManager.historyAreaFilePath);
 		SendBundleMsg sendbundle=new SendBundleMsg(nei.getEid().toString(), file, false, AreaInfo.defaultAreaId(), Bundle.NEI_AREA_BUNDLE);
 		messagequeue.add(sendbundle);
 		/*try {
