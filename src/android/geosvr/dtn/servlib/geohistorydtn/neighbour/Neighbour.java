@@ -196,10 +196,10 @@ public class Neighbour implements Serializable
 	 * 输出保存的区域的星期
 	 */
 	public void printAreaInfo(){
-		Log.i(tag,String.format("打印邻居（%s）的区域移动规律：",neighbourEid.toString()));
+		GeohistoryLog.i(tag,String.format("打印邻居（%s）的区域移动规律：",neighbourEid.toString()));
 		int i=1;
 		for(Area area:neighbourArea.areaMap.values()){
-			Log.d(tag,String.format("第%d个区域：\n%s",i++,area.toString()));
+			GeohistoryLog.d(tag,String.format("第%d个区域：\n%s",i++,area.toString()));
 		}
 	}
 	

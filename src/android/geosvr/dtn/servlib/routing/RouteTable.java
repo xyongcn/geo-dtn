@@ -82,6 +82,8 @@ public class RouteTable{
 						if(BundleDaemon.shutting_down())
 							break;
 						
+						Log.d(TAG,String.format("%s清理Link表中的失效连接",BundleDaemon.localEid().toString()));
+						
 						Iterator<RouteEntry> iter = route_table_.iterator();
 						while (iter.hasNext())
 			    		{

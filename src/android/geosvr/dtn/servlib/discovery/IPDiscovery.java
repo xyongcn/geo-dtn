@@ -298,15 +298,12 @@ public class IPDiscovery extends Discovery implements Runnable {
 					
 //					Log.i(TAG,"广播地址"+interfaceAddresses.get(0).getBroadcast().getHostAddress());
 				} catch (SocketException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				} catch (UnknownHostException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
 				IByteBuffer buf = new SerializableByteBuffer(1024);
-				// TODO Auto-generated method stub
 				while(true)
 				{
 					if(shutdown_)

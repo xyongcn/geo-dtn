@@ -1258,7 +1258,7 @@ public class Link implements Serializable {
 	//重置link的失效时间
 	public void reset_invalid_interval()
 	{
-		GeohistoryLog.v(TAG, String.format("reset link:link dest(%s) ",name() ));
+		GeohistoryLog.v(TAG, String.format("reset link:link dest(%s) ",dest_ip_.toString() ));
 		invalid_interval=INVALID_INTERVAL;
 	}
 	
