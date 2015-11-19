@@ -30,7 +30,7 @@ android:orientation="horizontal" android:layout_width="fill_parent" android:layo
     android:id="@+id/DTNApps_DTNSend_BigFileButton"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:text="SendBig" />
+    android:text="GeoExpriment" />
 
 <Button 
     android:id="@+id/DTNApps_DTNSend_GeohisRouterDataButton"

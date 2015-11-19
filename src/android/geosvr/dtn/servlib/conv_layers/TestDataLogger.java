@@ -326,7 +326,27 @@ public class TestDataLogger {
 //			      end.battery_value,
 //			      battery_consume
 //		);
+		
+		//只记录data bundle的日志
+		if(bundle.getBundleType()==Bundle.NEI_AREA_BUNDLE){
+			return;
+		}
+		
 		String record_data =String.format(
+				// Time written, bundle id , size ( bytes ), time start( readable ), time end ( readable ),  time used ( millisecond ), battery begin , battery end, battery consume
+				//时分秒，bundle id,总长度,开始时间,结束时间,使用时间,当前时间,目的地址,
+			      "%s,%d,%d,%s,%s,%d,%d,%s,%s",
+			      df.format(current_date),
+			      bundle.bundleid(),
+			      total_length,
+			      df.format(start_date),
+			      df.format(end_date),
+			      time_used,
+			      current_date.getTime(),
+			      bundle.dest().toString(),
+			      bundle.source().toString()
+		);
+		/*String record_data =String.format(
 				// Time written, bundle id , size ( bytes ), time start( readable ), time end ( readable ),  time used ( millisecond ), battery begin , battery end, battery consume
 			      "%s,%d,%d,%s,%s,%d",
 			      df.format(current_date),
@@ -335,7 +355,7 @@ public class TestDataLogger {
 			      df.format(start_date),
 			      df.format(end_date),
 			      time_used
-		);
+		);*/
 		try {
 			
 		if (type == test_data_type_t.UPLOAD)

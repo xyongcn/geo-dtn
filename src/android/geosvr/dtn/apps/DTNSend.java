@@ -207,7 +207,15 @@ public class DTNSend extends Activity  {
 						checkInputEID();
 						
 						// If the validator pass, send the message
-						sendBigFile();
+//						sendBigFile();
+						BundleRouter router=BundleDaemon.getInstance().router();
+						if(router instanceof GeoHistoryRouter){
+							((GeoHistoryRouter)router).geoDtnExpriment();
+//							GeohistoryLog.i(TAG, String.format(""));
+						}
+						else{
+							GeohistoryLog.e(TAG,"router is't the GeohistoryRouter,不能进行发送GeoRouterData");
+						}
 						
 						new AlertDialog.Builder(DTNSend.this).setMessage(
 								"Sent DTN message to DTN Service successfully ")

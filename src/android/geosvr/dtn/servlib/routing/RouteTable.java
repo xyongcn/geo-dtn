@@ -82,7 +82,7 @@ public class RouteTable{
 						if(BundleDaemon.shutting_down())
 							break;
 						
-						Log.d(TAG,String.format("%s清理Link表中的失效连接",BundleDaemon.localEid().toString()));
+//						Log.d(TAG,String.format("%s清理Link表中的失效连接",BundleDaemon.localEid().toString()));
 						
 						Iterator<RouteEntry> iter = route_table_.iterator();
 						while (iter.hasNext())
@@ -93,7 +93,8 @@ public class RouteTable{
 			    			if(thislink.get_invalid_interval()<=0)
 			    			{
 			    				Log.i(TAG,thislink.remote_eid().toString()+":删除该链接");
-			    				BundleDaemon.getInstance().post(new LinkDeleteRequest(thislink));
+			    				BundleDaemon.getInstance().post_at_head(new LinkDeleteRequest(thislink));//如果这里采用Link的Delete事件可能对正在发送的造成影响
+			    				
 			    				iter.remove();
 			    				
 			    			}

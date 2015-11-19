@@ -401,11 +401,12 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				// bundles" [DTN2]
 				check_next_hop(route.link());
 
-				GeohistoryLog.i(test, String.format("route_bundle,fwd_to_nexthop,洪泛转发给  %s,copyNum(%d)"
-						,route.link().remote_eid().toString(),bundle.floodBundleNum()));
 				if (!fwd_to_nexthop(bundle, route)) {
 					continue;
 				}
+				
+				GeohistoryLog.i(test, String.format("route_bundle,fwd_to_nexthop,洪泛转发完成，发送给  %s,copyNum(%d)"
+						,route.link().remote_eid().toString(),bundle.floodBundleNum()));
 
 				++count;
 			}
@@ -537,6 +538,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 						if (!fwd_to_nexthop(bundle, route)) {
 							continue;
 						}
+						GeohistoryLog.i(test, String.format("普通转发完成:dst(%s),copyNum(%d),bundle_%d,目的区域(0-3)：%d.%d.%d.%d",
+								bundle.dest().toString(),bundle.deliverBundleNum(),bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
 
 						++count;
 					}
@@ -1327,5 +1330,31 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		areaid[3]=Integer.valueOf(idstr[3]);
 		SendBundleMsg send=new SendBundleMsg(dest_eid, file, false, areaid, Bundle.DATA_BUNDLE);
 		messagequeue.add(send);
+	}
+	
+	/**
+	 * geoDtn的实验，由192.168.5.11节点进行发送
+	 */
+	public void geoDtnExpriment(){
+		String eid_14="dtn://192.168.1.14.wu.com";
+		String eid_13="dtn://192.168.1.13.wu.com";
+		String eid_12="dtn://192.168.1.12.wu.com";
+		String eid_11="dtn://192.168.1.11.wu.com";
+		
+		int[] areaid_1_1_2={1854974240,1854974240,1587203,912940};
+		
+		int[] areaid_defo={1424349019,1424349019,1587203,912940};
+		int[] areaid_nmij={-259923744,-259923744,1587203,912940};
+		
+		File payload1=new File("/sdcard/dtnMessage/dtnMessage_1.txt");
+		File payload2=new File("/sdcard/dtnMessage/dtnMessage_2.txt");
+		File payload3=new File("/sdcard/dtnMessage/dtnMessage_3.txt");
+		
+		for(int i=0;i<1;i++){
+			SendBundleMsg send1=new SendBundleMsg(eid_14, payload2, false, areaid_defo, Bundle.DATA_BUNDLE);
+			messagequeue.add(send1);
+			SendBundleMsg send2=new SendBundleMsg(eid_13, payload3, false, areaid_nmij, Bundle.DATA_BUNDLE);
+			messagequeue.add(send2);
+		}
 	}
 }
