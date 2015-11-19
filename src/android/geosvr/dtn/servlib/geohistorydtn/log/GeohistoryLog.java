@@ -18,7 +18,7 @@ import android.util.Log;
  */
 public class GeohistoryLog implements Runnable
 {
-	private static String logfile="/sdcard/geoHistory_dtn/GeohistoryLog.txt";
+	public static String logfile="/sdcard/geoHistory_dtn/GeohistoryLog.txt";
 	private static String tag="GeohistoryLog";
 	
 	BlockingQueue<String> queue;//写入日志文件内容的队列

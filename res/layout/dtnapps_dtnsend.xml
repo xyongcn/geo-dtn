@@ -31,6 +31,13 @@ android:orientation="horizontal" android:layout_width="fill_parent" android:layo
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="SendBig" />
+
+<Button 
+    android:id="@+id/DTNApps_DTNSend_GeohisRouterDataButton"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="SendGeoData"
+    />
   
 <Button android:layout_width="wrap_content" android:layout_height="wrap_content" 
 android:id="@+id/DTNApps_DTNSend_CloseButton"
@@ -89,4 +96,17 @@ android:layout_marginLeft="10dp"
       <requestFocus />
   </EditText>
 		
+  <TextView 
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="发送给目标节点的区域层次信息（只有在GeohistoryRouter才有用）的数据包信息："
+      
+      />
+  
+  <EditText 
+      android:id="@+id/DTNApps_DTNSend_AreaIdTextView"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="1645316860,1645316860,1587203,912940"
+      />
 </LinearLayout>

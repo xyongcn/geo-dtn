@@ -9,6 +9,8 @@ import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.geosvr.dtn.servlib.bundling.BundlePayload;
 import android.geosvr.dtn.servlib.bundling.exception.BundleLockNotHeldByCurrentThread;
@@ -185,8 +187,34 @@ public class NeighbourManager {
 	 */
 	public Neighbour getNeighbour(EndpointID eid)
 	{
-		if(eid!=null)
-			return neighbourlist.get(eid.toString());
+		//在原有的eid判断相等基础上，判断他们的ip是否相等，毕竟
+		if(eid!=null){
+			//将eid.toString后面的文件目录什么的全部去掉，然后比对前面的Ip,因为正则表达式匹配的时候可能会导致最后一位有的少/有的没有/，因此需要在比较添加后再查找一次
+			String temp;
+			Pattern pattern=Pattern.compile("^dtn://[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[A-Za-z]+.[A-Za-z]+($|/)");
+			Matcher mat=pattern.matcher(eid.toString());
+			if(mat.find()){
+				temp=mat.group();
+			}
+			else{
+				return null;
+			}
+			//判断结尾是不是/
+			String temp2;
+			if(temp.lastIndexOf("/")==temp.length()-1){
+				temp2=temp.substring(0, temp.length()-1);
+			}
+			else{
+				temp2=temp+"/";
+			}
+			//做两侧查找
+			Neighbour nei=neighbourlist.get(temp);
+			if(nei!=null)
+				return nei;
+			else{
+				return neighbourlist.get(temp2);
+			}
+		}
 		else
 			return null;
 	}

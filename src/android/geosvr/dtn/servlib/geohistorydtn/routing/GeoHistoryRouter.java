@@ -60,6 +60,7 @@ import android.util.Log;
 public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 {
 	static String tag="GeoHistoryRouter";
+	static String test="routerTest";
 	
 	RouteAllBundleMsg routeAllBundle=new RouteAllBundleMsg();
 	
@@ -136,6 +137,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		//对其他类型bundle进行
 		else if(event.bundle().getBundleType()==Bundle.DATA_BUNDLE)
 		{
+			GeohistoryLog.i(tag, String.format("收到要发送的DataBundle,des_eid:%s",event.bundle().dest().toString()));
 			super.handle_bundle_received(event);
 		}
 		else
@@ -161,6 +163,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	protected void handle_bundle_delivered(BundleDeliveredEvent event) {
 		Log.i(tag, String.format("handle_bundle_delivered ,dst(%s),ifisNeigh(%b)",
 				event.bundle().dest().toString(),event.bundle().getBundleType()==Bundle.NEI_AREA_BUNDLE));
+		Log.i(test, String.format("handle_bundle_delivered ,dst(%s),source(%s),ifisNeigh(%b)",
+				event.bundle().dest().toString(),event.bundle().source().toString(),event.bundle().getBundleType()==Bundle.NEI_AREA_BUNDLE));
 		
 		if(event.bundle().getBundleType()==Bundle.NEI_AREA_BUNDLE){
 			
@@ -232,6 +236,9 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		//获取eid
 		Link link=event.contact().link();
 		EndpointID eid=link.remote_eid();
+		
+		GeohistoryLog.i(test, String.format("geohistory router, handle contact up,dst(%s)",eid.toString()));
+		
 //		a)	触发对已有邻居信息的保存
 		Neighbour nei=NeighbourManager.getInstance().checkNeighbour(eid);
 		nei.addTimeCount();//添加当前邻居的计时器
@@ -264,7 +271,9 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	@Override
 	protected void handle_contact_down(ContactDownEvent event) {
 
-		GeohistoryLog.i(tag, String.format("geohistory router, handle contact up"));
+		GeohistoryLog.i(tag, String.format("geohistory router, handle contact down"));
+		
+		GeohistoryLog.i(test, String.format("geohistory router, handle contact down,dst(%s)",event.contact().link().remote_eid().toString()));
 		
 		super.handle_contact_down(event);
 		
@@ -290,6 +299,9 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			return route_neighbourArea_bundle(bundle);
 		}
 		
+		GeohistoryLog.i(tag,String.format("route_bundle:send data bundle,bundle dst(%s),bundleid(%d),areaId(%d,%d,%d,%d) ",
+				bundle.dest().toString(),bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
+		
 		RouteEntryVec matches = new RouteEntryVec();
 
 		GeohistoryLog.d(tag, String.format("route_bundle: checking bundle %d", bundle
@@ -308,7 +320,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		//判断 bundle的关于区域的信息是否合法，GeoHistory相关信息不合法时退出发送
 		if(!bundle.isGeoHistoryDtnValide())
 		{
-			GeohistoryLog.e(tag,String.format("bundle_%d 的geohistory相关信息不合法；区域(0-3)：%d.%d.%d.%d",
+			GeohistoryLog.e(test,String.format("bundle_%d 的geohistory相关信息不合法；区域(0-3)：%d.%d.%d.%d",
 					bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
 			return 0;
 		}
@@ -325,8 +337,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			{
 				bundle.setIsFlooding(1);
 			}
-			GeohistoryLog.i(tag, String.format("进入目标区域，执行洪泛转发。bundle_%d,区域(0-3)：%d.%d.%d.%d",
-					bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
+			GeohistoryLog.i(test, String.format("进入目标区域，执行洪泛转发:dst(%s),copyNum(%d),bundle_%d,区域(0-3)：%d.%d.%d.%d",
+					bundle.dest().toString(),bundle.floodBundleNum(),bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
 			
 
 			//进行洪泛转发
@@ -334,7 +346,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			
 			sort_routes(matches);
 
-			GeohistoryLog.d(tag, String.format(
+			GeohistoryLog.d(test, String.format(
 					"route_bundle bundle id %d: checking %d route entry matches",
 					bundle.bundleid(), matches.size()));
 
@@ -343,7 +355,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			while (itr.hasNext()) 
 			{
 				RouteEntry route = itr.next();
-				GeohistoryLog.d(tag, String.format("checking route entry %s link %s (%s)",
+				GeohistoryLog.d(test, String.format("checking route entry %s link %s (%s)",
 						route.toString(), route.link().name(), route.link()));
 
 				if (!should_fwd(bundle, route)) {
@@ -364,7 +376,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 						forwardbundle=(Bundle) bundle.clone();
 					} catch (CloneNotSupportedException e) {
 						e.printStackTrace();
-						GeohistoryLog.d(tag, String.format("clone bundle_%d failed ", bundle.bundleid()));
+						GeohistoryLog.d(test, String.format("clone bundle_%d failed ", bundle.bundleid()));
 						return 0;
 					}
 					
@@ -389,6 +401,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				// bundles" [DTN2]
 				check_next_hop(route.link());
 
+				GeohistoryLog.i(test, String.format("route_bundle,fwd_to_nexthop,洪泛转发给  %s,copyNum(%d)"
+						,route.link().remote_eid().toString(),bundle.floodBundleNum()));
 				if (!fwd_to_nexthop(bundle, route)) {
 					continue;
 				}
@@ -396,9 +410,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				++count;
 			}
 
-			GeohistoryLog.d(tag, String.format(
-					"route_bundle bundle id %d: forwarded on %d links", bundle
-							.bundleid(), count));
+			GeohistoryLog.d(tag, String.format("route_bundle bundle id %d: forwarded on %d links", 
+					bundle.bundleid(), count));
 			return count;
 		}
 		else
@@ -406,7 +419,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			//本节点进入目的区域后又离开了,这里不进行任何转发
 			if(bundle.isFlooding()==1)
 			{
-				GeohistoryLog.i(tag, String.format("进入目标区域又离开了，不进行任何转发。bundle_%d,目的区域(0-3)：%d.%d.%d.%d",
+				GeohistoryLog.i(test, String.format("进入目标区域又离开了，不进行任何转发。bundle_%d,目的区域(0-3)：%d.%d.%d.%d",
 						bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
 				//判断是否超时
 				//先不管超时，bytewalla应该自己管理好了超时
@@ -416,8 +429,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			//本节点没有进入目的区域，执行普通转发
 			else
 			{
-				GeohistoryLog.i(tag, String.format("没有进入目标区域，执行普通转发。bundle_%d,目的区域(0-3)：%d.%d.%d.%d",
-						bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
+				GeohistoryLog.i(test, String.format("没有进入目标区域，执行普通转发:dst(%s),copyNum(%d),bundle_%d,目的区域(0-3)：%d.%d.%d.%d",
+						bundle.dest().toString(),bundle.deliverBundleNum(),bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
 				
 				//普通转发
 				//节点Area与link的表
@@ -426,7 +439,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				Area thisnodeArea=baseArea.checkBundleDestArea(bundle);
 				if(thisnodeArea==null)
 				{
-					GeohistoryLog.i(tag, String.format("执行普通转发时，本节点没有找到与目标节点处在同一层的区域。bundle_%d,目的区域(0-3)：%d.%d.%d.%d",
+					GeohistoryLog.i(test, String.format("执行普通转发时，本节点没有找到与目标节点处在同一层的区域。bundle_%d,目的区域(0-3)：%d.%d.%d.%d",
 							bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
 					return 0;
 				}
@@ -435,7 +448,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				
 				if(linkAreaMap.isEmpty())
 				{
-					GeohistoryLog.i(tag, String.format("没有找到合适的link"));
+					GeohistoryLog.i(test, String.format("没有找到合适的link"));
 					return 0;
 				}
 				
@@ -458,7 +471,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 					RouteEntry route=linkAreaMap.get(a);
 					if(route!=null)
 					{
-						GeohistoryLog.d(tag, String.format("checking route entry %s link %s (%s)",
+						GeohistoryLog.d(test, String.format("checking route entry %s link %s (%s)",
 								route.toString(), route.link().name(), route.link()));
 
 						if (!should_fwd(bundle, route)) {
@@ -479,13 +492,13 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 								forwardbundle=(Bundle) bundle.clone();
 							} catch (CloneNotSupportedException e) {
 								e.printStackTrace();
-								GeohistoryLog.e(tag, "bundle.clone出现错误");
+								GeohistoryLog.e(test, "bundle.clone出现错误");
 								return 0;
 							}
 							
 							if(forwardbundle==null)
 							{
-								GeohistoryLog.e(tag, "bundle.clone出现错误");
+								GeohistoryLog.e(test, "bundle.clone出现错误");
 								return 0;
 							}
 							
@@ -508,7 +521,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 						
 						
 						if (deferred_list(route.link()).list().contains(bundle)) {
-							GeohistoryLog.d(tag, String.format("route_bundle bundle %d: "
+							GeohistoryLog.d(test, String.format("route_bundle bundle %d: "
 									+ "ignoring link %s since already deferred", bundle
 									.bundleid(), route.link().name()));
 							continue;
@@ -532,7 +545,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 					++no;
 				}
 				
-				GeohistoryLog.d(tag, String.format(
+				GeohistoryLog.d(test, String.format(
 						"route_bundle bundle id %d: forwarded on %d links", bundle
 								.bundleid(), count));
 				return count;
@@ -659,7 +672,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				}
 				//如果是普通转发，获取尽可能接近目的区域的邻居的link
 				else if(sameAreaLevel>0 && sameLevelAreaMap!=null && entry_vec!=null){
-					GeohistoryLog.d(tag, String.format("普通转发方式查找路由表中Link,bundle dst:%s",bundle.dest().toString()));
+					GeohistoryLog.d(test, String.format("普通转发方式查找路由表中Link,bundle dst:%s,sameAreaLevel:%s",
+							bundle.dest().toString(),sameAreaLevel));
 //					Neighbour neighbour=NeighbourManager.getInstance().getNeighbour(bundle.dest());//这里不应该是找到历史邻居中的目的节点，而是当前节点的历史邻居位置
 					Neighbour neighbour=NeighbourManager.getInstance().getNeighbour(entry.dest_pattern());
 					
@@ -697,7 +711,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 							(entry.link().state() == state_t.OPEN || 
 							entry.link().state() == state_t.AVAILABLE ))
 					{
-						GeohistoryLog.d(tag,String.format("match entry %s", entry.toString() ));
+						GeohistoryLog.d(test,String.format("普通转发方式查找路由表中Link,match entry %s", entry.toString() ));
 						entry_vec.add(entry);
 						++count;
 						
@@ -711,7 +725,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				}
 				//不合法的查找路由表中link方式
 				else{
-					GeohistoryLog.d(tag, String.format("不合法的请求查找路由表中Link," +
+					GeohistoryLog.d(test, String.format("不合法的请求查找路由表中Link," +
 							"bundle dst:%s,sameAreaLevel：%d,sameLevelAreaMap是否为空:%b, entry_vec是否为空:%b",
 							bundle.dest().toString(),sameAreaLevel,sameLevelAreaMap==null,entry_vec==null));
 				}
@@ -943,6 +957,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				baseArea=newBaseArea;
 				
 				//将移动的记录保存到日志中
+				GeohistoryLog.i(test, String.format("move to a new area : %s",newBaseArea.toString()));
 				GeohistoryLog.d(tag,"移动到新区域："+newBaseArea.toString());
 				AreaManager.writeAreaLogToFile("move to new area, ",baseArea);
 			}
@@ -967,13 +982,15 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		if(messagequeue.contains(routeAllBundle)){
 			messagequeue.remove(routeAllBundle);
 		}
-//		messagequeue.add(routeAllBundle);
+		messagequeue.add(routeAllBundle);//用来将队列里面的bundle重新发送
 	}
 	
 	/**
 	 * route 所有的bundle的事件处理
 	 */
 	private void handle_routeAllBundle(){
+		
+		GeohistoryLog.i(test, String.format("geohistory router, handle reroute all bundle"));
 		//reroute all bundle
 		pending_bundles_.get_lock().lock();
 		try {
@@ -1014,8 +1031,10 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			e.printStackTrace();
 			GeohistoryLog.e(tag, String.format("向邻居%s发送自己的区域信息的bundle出错:%s", msg.dest_eid,"DTNAPIFailException"));
 		}
-		GeohistoryLog.e(tag, String.format("向邻居%s发送了自己的区域信息的bundle成功", msg.dest_eid));
+		GeohistoryLog.i(tag, String.format("向邻居%s发送了bundle成功", msg.dest_eid));
 		
+		GeohistoryLog.i(test, String.format("handle_sendBundle ,send Bundle to neighbour ,dst(%s),ifisNeigh(%b)",
+				msg.dest_eid,msg.bundleType==Bundle.NEI_AREA_BUNDLE));
 	}
 	
 	/**
@@ -1283,5 +1302,30 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		private RouteType(int num){
 			this.sameAreaLevel=num;
 		}
+	}
+	
+	/**
+	 * 用来测试路由算法，发送测试的路由算法
+	 */
+	public void sendTestDataBundle(String dest_eid,String areaidstr){
+		File file=new File(GeohistoryLog.logfile);
+		int areaid[]=new int[4];
+		String[] idstr=areaidstr.split(",");
+		if(idstr.length!=4){
+			GeohistoryLog.w(tag,String.format("准备向邻居发送data数据包出错,areaidstr的数据不对，areaidstr:%s"
+					,areaidstr));
+		}
+		else{
+			GeohistoryLog.i(tag, String.format("向邻居发送数据包:dest_eid:%s,areaidStr:%s"
+					,dest_eid,areaidstr));
+			GeohistoryLog.i(test, String.format("向邻居发送数据包:dest_eid:%s,areaidStr:%s"
+					,dest_eid,areaidstr));
+		}
+		areaid[0]=Integer.valueOf(idstr[0]);
+		areaid[1]=Integer.valueOf(idstr[1]);
+		areaid[2]=Integer.valueOf(idstr[2]);
+		areaid[3]=Integer.valueOf(idstr[3]);
+		SendBundleMsg send=new SendBundleMsg(dest_eid, file, false, areaid, Bundle.DATA_BUNDLE);
+		messagequeue.add(send);
 	}
 }

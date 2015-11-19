@@ -39,7 +39,10 @@ import android.geosvr.dtn.applib.types.DTNBundleSpec;
 import android.geosvr.dtn.applib.types.DTNEndpointID;
 import android.geosvr.dtn.applib.types.DTNHandle;
 import android.geosvr.dtn.servlib.bundling.BundleDaemon;
+import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
+import android.geosvr.dtn.servlib.geohistorydtn.routing.GeoHistoryRouter;
 import android.geosvr.dtn.servlib.naming.EndpointID;
+import android.geosvr.dtn.servlib.routing.BundleRouter;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -71,6 +74,11 @@ public class DTNSend extends Activity  {
 	private Button SendBigButton;
 	
 	/**
+	 * sendButton reference object for GeohistoryRouter
+	 */
+	private Button SendGeohistoryRouterDataButton;
+	
+	/**
 	 * CloseButton reference object
 	 */
 	private Button closeButton;
@@ -84,6 +92,11 @@ public class DTNSend extends Activity  {
 	 * Message Textview reference object
 	 */
 	private TextView MessageTextView;
+	
+	/**
+	 * 用来获取目标区域层次信息的EditText
+	 */
+	private TextView AreaIdEditText;
 	
 	/**
 	 * longitude and latitude
@@ -181,6 +194,7 @@ public class DTNSend extends Activity  {
 	{
 		    DestEIDEditText = (EditText) this.findViewById(R.id.DTNApps_DTNSend_DestEIDEditText);
 			MessageTextView = (TextView) this.findViewById(R.id.DTNApps_DTNSend_MessageTextView);
+			AreaIdEditText = (EditText) this.findViewById(R.id.DTNApps_DTNSend_AreaIdTextView);
 			DestLongitude	= (EditText) this.findViewById(R.id.Dest_Longitude);
 			DestLatitude	= (EditText) this.findViewById(R.id.Dest_Latitude);
 			SendButton = (Button)this.findViewById(R.id.DTNApps_DTNSend_SendButton);
@@ -277,6 +291,51 @@ public class DTNSend extends Activity  {
 				}
 			});
 		  	
+			//利用Geohistory向邻居发送数据bundle
+			SendGeohistoryRouterDataButton=(Button)findViewById(R.id.DTNApps_DTNSend_GeohisRouterDataButton);
+			SendGeohistoryRouterDataButton.setOnClickListener(new View.OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+
+					try {
+						// Validate the user input first whether the EID is valid EID
+						checkInputEID();
+						
+						//向GeoHistoryRouter传递
+//						sendBigFile();
+						String dest_eid = DestEIDEditText.getText().toString();
+						String areaidstr = AreaIdEditText.getText().toString();
+						BundleRouter router=BundleDaemon.getInstance().router();
+						if(router instanceof GeoHistoryRouter){
+							((GeoHistoryRouter)router).sendTestDataBundle(dest_eid, areaidstr);
+//							GeohistoryLog.i(TAG, String.format(""));
+						}
+						else{
+							GeohistoryLog.e(TAG,"router is't the GeohistoryRouter,不能进行发送GeoRouterData");
+						}
+						
+						new AlertDialog.Builder(DTNSend.this).setMessage(
+								"Sent DTN message to DTN Service successfully ")
+								.setPositiveButton("OK", null).show();
+						
+						
+					} catch (InvalidEndpointIDException e) {
+						new AlertDialog.Builder(DTNSend.this).setMessage(
+								"Dest EID is invalid. Please input valid EID for example dtn://endpoint.com")
+								.setPositiveButton("OK", null).show();
+						
+						
+						
+					} catch (Exception e) {
+						new AlertDialog.Builder(DTNSend.this).setMessage(
+						"Internal error with " + e.getMessage())
+						.setPositiveButton("OK", null).show();
+						
+					}
+				}
+			});
+			
 			closeButton = (Button)this.findViewById(R.id.DTNApps_DTNSend_CloseButton);
 			closeButton.setOnClickListener(new OnClickListener() {
 				
