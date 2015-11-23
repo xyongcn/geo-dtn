@@ -1,7 +1,12 @@
 package android.geosvr.dtn.servlib.geohistorydtn.routing;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.SocketException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,8 +29,11 @@ import android.geosvr.dtn.apps.DTNOpenFailException;
 import android.geosvr.dtn.apps.DTNSend;
 import android.geosvr.dtn.servlib.bundling.Bundle;
 import android.geosvr.dtn.servlib.bundling.BundleDaemon;
+import android.geosvr.dtn.servlib.bundling.BundleInfoCache;
+import android.geosvr.dtn.servlib.bundling.BundleProtocol;
 import android.geosvr.dtn.servlib.bundling.BundlePayload.location_t;
 import android.geosvr.dtn.servlib.bundling.ForwardingInfo;
+import android.geosvr.dtn.servlib.bundling.event.BundleDeleteRequest;
 import android.geosvr.dtn.servlib.bundling.event.BundleDeliveredEvent;
 import android.geosvr.dtn.servlib.bundling.event.BundleEvent;
 import android.geosvr.dtn.servlib.bundling.event.BundleReceivedEvent;
@@ -35,6 +43,7 @@ import android.geosvr.dtn.servlib.bundling.event.LinkCreatedEvent;
 import android.geosvr.dtn.servlib.bundling.event.event_source_t;
 import android.geosvr.dtn.servlib.bundling.exception.BundleListLockNotHoldByCurrentThread;
 import android.geosvr.dtn.servlib.contacts.Link;
+import android.geosvr.dtn.servlib.contacts.Link.link_type_t;
 import android.geosvr.dtn.servlib.contacts.Link.state_t;
 import android.geosvr.dtn.servlib.geohistorydtn.area.Area;
 import android.geosvr.dtn.servlib.geohistorydtn.area.AreaInfo;
@@ -50,6 +59,7 @@ import android.geosvr.dtn.servlib.naming.EndpointIDPattern;
 import android.geosvr.dtn.servlib.routing.RouteEntry;
 import android.geosvr.dtn.servlib.routing.RouteEntryVec;
 import android.geosvr.dtn.servlib.routing.TableBasedRouter;
+import android.geosvr.dtn.servlib.storage.BundleStore;
 import android.util.Log;
 
 /** 
@@ -64,12 +74,29 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	
 	RouteAllBundleMsg routeAllBundle=new RouteAllBundleMsg();
 	
+	/**
+	 *  "Cache to check for duplicates and to implement a simple RPF check" [DTN2]
+	 *  用来检测是不是一个重复的dtn bundle
+	 */
+	private BundleInfoCache reception_cache_;
+	
+	/**
+	 * 用来记录该bundle的副本数目,其实是第一阶段的bundle副本数量
+	 */
+	private HashMap<String,Integer> Forward1PayloadNumMap;
+	/**
+	 * 用来记录spray-and-wait过程的bundle副本数目
+	 */
+	private HashMap<String,Integer>	Forward2PayloadNumMap;
+	
 	public GeoHistoryRouter() {
 		
 		super();
 //		areaInfoList=new LinkedBlockingDeque<Object>();
 		messagequeue=new LinkedBlockingDeque<Object>();
-		
+		reception_cache_ = new BundleInfoCache(1024);
+		Forward1PayloadNumMap=new HashMap<String, Integer>(1024);
+		Forward2PayloadNumMap=new HashMap<String, Integer>(1024);
 		init();
 	}
 	
@@ -77,6 +104,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		Log.i(tag,"starts GeoHistoryRouter");
 		
 		(new Thread(this)).start();
+		
+		(new Thread(new waitOrder())).start();//启动接受命令行发送数据的命令
 	}
 	
 	
@@ -137,8 +166,20 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		//对其他类型bundle进行
 		else if(event.bundle().getBundleType()==Bundle.DATA_BUNDLE)
 		{
-			GeohistoryLog.i(tag, String.format("收到要发送的DataBundle,des_eid:%s",event.bundle().dest().toString()));
-			super.handle_bundle_received(event);
+			Bundle bundle = event.bundle();
+			EndpointID remote_eid = EndpointID.NULL_EID();
+			GeohistoryLog.i(test, String.format("收到要发送的DataBundle,des_eid:%s",event.bundle().dest().toString()));
+			if (event.link() != null) {
+				remote_eid = event.link().remote_eid();
+			}
+
+			if (!reception_cache_.add_entry(bundle, remote_eid)) {
+				Log.i(test, String.format("ignoring duplicate bundle: bundle %d", bundle.bundleid()));
+				BundleDaemon.getInstance().post_at_head(new BundleDeleteRequest(bundle,BundleProtocol.status_report_reason_t.REASON_NO_ADDTL_INFO));
+				return;
+			}
+//			super.handle_bundle_received(event);
+			route_bundle(bundle);
 		}
 		else
 		{
@@ -325,8 +366,10 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			return 0;
 		}
 		
-		//如果是邻居间传递各自区域信息的bundle
-//		if()
+		//判断是否遇到了目标节点，是否可以直接发送给目标节点
+		if(canDirectDelivery(bundle)){
+			return 1;
+		}
 		
 		//查找合适的需要转发的bundle
 		Area bundleArea=new Area(AreaLevel.FIRSTLEVEL, bundle.firstArea());
@@ -362,29 +405,40 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 					continue;
 				}
 				
-				//Spray and Wait转发过程中，副本数为1则只对目标节点发送，其余情况下副本对半发送
-				if(bundle.floodBundleNum()<=1)
-				{
-					//当flood的副本数量只有1的时候，只向目的节点发送bundle
-					if(!route.dest_pattern().match(bundle.dest()))
-						return 0;
+				
+				/*Bundle forwardbundle=null;
+				try {
+					forwardbundle=(Bundle) bundle.clone();
+					forwardbundle.set_bundleid(BundleStore.getInstance().next_id());//重命名Bundle id，防止transmitted之后删除
+				} catch (CloneNotSupportedException e) {
+					e.printStackTrace();
+					GeohistoryLog.d(test, String.format("clone bundle_%d failed ", bundle.bundleid()));
+					return 0;
 				}
-				else
-				{
-					Bundle forwardbundle=null;
-					try {
-						forwardbundle=(Bundle) bundle.clone();
-					} catch (CloneNotSupportedException e) {
-						e.printStackTrace();
-						GeohistoryLog.d(test, String.format("clone bundle_%d failed ", bundle.bundleid()));
-						return 0;
-					}
+				
+				int bundleCopyNum=bundle.floodBundleNum()/2;
+				bundle.setFloodBundleNum(bundle.floodBundleNum()-bundleCopyNum);
+				forwardbundle.setFloodBundleNum(bundleCopyNum);
+				bundle=forwardbundle;//将bundle的引用改为修改了副本数的bundle引用
+				*/
+				
+				//更改bundle的副本数量
+				String bundle_id=StringOfBundle(bundle);
+				int num=bundle.floodBundleNum();
+				if(Forward2PayloadNumMap.containsKey(bundle_id)){
+					num=Forward2PayloadNumMap.get(bundle_id)/2;
 					
-					int bundleCopyNum=bundle.floodBundleNum()/2;
-					bundle.setFloodBundleNum(bundle.floodBundleNum()-bundleCopyNum);
-					forwardbundle.setFloodBundleNum(bundleCopyNum);
-					bundle=forwardbundle;//将bundle的引用改为修改了副本数的bundle引用
+//						Forward2PayloadNumMap.put(bundle_id, num);
 				}
+				
+				if(num<1){
+					GeohistoryLog.w(test, String.format("bundle(to:%s) don't have flood payload num(%d)",bundle.dest().toString(),num));
+					continue;
+				}
+				
+				bundle.setFloodBundleNum(num);
+				Forward2PayloadNumMap.put(bundle_id, num);
+			
 
 				
 				if (deferred_list(route.link()).list().contains(bundle)) {
@@ -479,46 +533,66 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 							continue;
 						}
 
-						//对bundle副本数目的修改
-						//当bundle副本数只有1的时候，只发给目的节点
-						if(bundle.deliverBundleNum()<=1)
-						{
-							if(!route.dest_pattern().match(bundle.dest()))
-								return 0;
+					
+						/*Bundle forwardbundle=null;
+						try {
+							forwardbundle=(Bundle) bundle.clone();
+							forwardbundle.set_bundleid(BundleStore.getInstance().next_id());//重命名Bundle id，防止transmitted之后删除
+						} catch (CloneNotSupportedException e) {
+							e.printStackTrace();
+							GeohistoryLog.e(test, "bundle.clone出现错误");
+							return 0;
 						}
+						
+						if(forwardbundle==null)
+						{
+							GeohistoryLog.e(test, "bundle.clone出现错误");
+							return 0;
+						}
+						
+						//该节点排名小于副本数量，执行2分法发送
+						if(no<=forwardbundle.deliverBundleNum())
+						{
+							int copynum=forwardbundle.deliverBundleNum()/2;
+							bundle.setDeliverBundleNum(bundle.deliverBundleNum()-copynum);
+							forwardbundle.setDeliverBundleNum(copynum);
+							bundle=forwardbundle;
+						}
+						//该节点排名大于副本数量，只发送1份
 						else
 						{
-							Bundle forwardbundle=null;
-							try {
-								forwardbundle=(Bundle) bundle.clone();
-							} catch (CloneNotSupportedException e) {
-								e.printStackTrace();
-								GeohistoryLog.e(test, "bundle.clone出现错误");
-								return 0;
-							}
+							bundle.setDeliverBundleNum(bundle.deliverBundleNum()-1);
+							forwardbundle.setDeliverBundleNum(1);
+							bundle=forwardbundle;
+						}*/
+						
+						//更改bundle的副本数量
+						String bundle_id=StringOfBundle(bundle);
+						int num=bundle.deliverBundleNum();
+						if(Forward1PayloadNumMap.containsKey(bundle_id)){
+							num=Forward1PayloadNumMap.get(bundle_id);
 							
-							if(forwardbundle==null)
-							{
-								GeohistoryLog.e(test, "bundle.clone出现错误");
-								return 0;
-							}
-							
-							//该节点排名小于副本数量，执行2分法发送
-							if(no<=forwardbundle.deliverBundleNum())
-							{
-								int copynum=forwardbundle.deliverBundleNum()/2;
-								bundle.setDeliverBundleNum(bundle.deliverBundleNum()-copynum);
-								forwardbundle.setDeliverBundleNum(copynum);
-								bundle=forwardbundle;
-							}
-							//该节点排名大于副本数量，只发送1份
-							else
-							{
-								bundle.setDeliverBundleNum(bundle.deliverBundleNum()-1);
-								forwardbundle.setDeliverBundleNum(1);
-								bundle=forwardbundle;
-							}
 						}
+						
+						if(num<=1){
+							GeohistoryLog.w(test, String.format("bundle(to:%s) don't have deliver num(%d)",bundle.dest().toString(),num));
+							continue;
+						}
+						
+						//该节点排名小于副本数量，执行2分法发送
+						if(no<=num)
+						{
+							bundle.setDeliverBundleNum(num/2);
+							num=num-num/2;
+						}
+						//该节点排名大于副本数量，只发送1份
+						else
+						{
+							--num;
+							bundle.setDeliverBundleNum(1);
+						}
+						Forward1PayloadNumMap.put(bundle_id, num);
+					
 						
 						
 						if (deferred_list(route.link()).list().contains(bundle)) {
@@ -632,8 +706,38 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 					continue;
 				
 				//如果link不该被发送，则
-				/*if (!should_fwd(bundle, entry)) {
-					continue;
+				if (!should_fwd(bundle, entry)) {
+					EndpointID prevhop = reception_cache_.lookup(bundle);
+					if (prevhop != null) {
+						if (prevhop.equals(entry.link().remote_eid())
+								&& !prevhop.equals(EndpointID.NULL_EID())) {
+							GeohistoryLog.w(tag, String.format("should_fwd: this link(remote:%s) should not be send",entry.dest_pattern().toString()));
+							GeohistoryLog.w(test, String.format("should_fwd: this link(remote:%s) should not be send",entry.dest_pattern().toString()));
+							continue;
+						}
+					}
+					
+				}
+				
+				//遇到了目标节点
+				/*if(entry.dest_pattern().match(bundle.dest())){
+					GeohistoryLog.i(test, String.format("this link(remote:%s) is the dest point",entry.dest_pattern().toString()));
+					//原有算法，将link加到路由项中
+					if(!entry_vec.contains(entry) && 
+							(entry.link().state() == state_t.OPEN || 
+							entry.link().state() == state_t.AVAILABLE ))
+					{
+						GeohistoryLog.d(test,String.format("普通转发方式查找路由表中Link,match entry %s", entry.toString() ));
+						entry_vec.add(entry);
+						++count;
+						
+						//加入到Map里面
+						Neighbour neighbour=NeighbourManager.getInstance().getNeighbour(entry.dest_pattern());
+						NeighbourArea neiArea=neighbour.getNeighbourArea();
+						Area area=neiArea.checkBundleDestArea(bundle);
+						sameLevelAreaMap.put(area,entry);
+						break;
+					}
 				}*/
 				
 				//如果是flood的转发的方式，那么需要获取所有的link
@@ -680,20 +784,27 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 //					Neighbour neighbour=NeighbourManager.getInstance().getNeighbour(bundle.dest());//这里不应该是找到历史邻居中的目的节点，而是当前节点的历史邻居位置
 					Neighbour neighbour=NeighbourManager.getInstance().getNeighbour(entry.dest_pattern());
 					
-					if(neighbour==null)
+					if(neighbour==null){
+						GeohistoryLog.d(test, String.format("没有邻居%s的记录",neighbour.getEid().toString()));
 						continue;
+					}
 					
 					NeighbourArea neiArea=neighbour.getNeighbourArea();
-					if(neiArea==null)
+					if(neiArea==null){
+						GeohistoryLog.d(test, String.format("没有邻居%s的历史区域移动规律",neighbour.getEid().toString()));
 						continue;
+					}
 					
 					Area area=neiArea.checkBundleDestArea(bundle);
-					if(area==null)
+					if(area==null){
+						GeohistoryLog.d(test, String.format("邻居%s没有去过目标区域",neighbour.getEid().toString()));
 						continue;
+					}
 					
 					//本节点离目标节点更接近，因此否决该link
 					if(area.getAreaLevel()>areaLevel)
 					{
+						GeohistoryLog.d(test, String.format("本节点到过的区域比邻居%s更接近目标区域",neighbour.getEid().toString()));
 						continue;
 					}
 					//该邻居比本节点更接近目的地，调整区域等级和已有的link表
@@ -704,7 +815,10 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 						areaLevel=area.getAreaLevel();
 					}
 					//该邻居与本节点一样接近目的地，默认操作
-					else {}
+					else {
+						GeohistoryLog.d(test, String.format("本节点和比邻居%s一样接近目标区域",neighbour.getEid().toString()));
+						continue;
+					}
 					
 					//将尽可能接近目的地的区域邻居区域加入到
 //					sameLevelAreaList.;
@@ -747,13 +861,59 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		}
 	}
 	
+	
+	/**
+	 * 能否直接发送给目标节点，需要对照router表里面的route进行一遍检查，若可以直接交付给目标节点，那么需要直接交付，并且删除该Bundle
+	 * @param bundle：检查是否能够直接交付的bundle
+	 * @return true则表示可以直接交付，删除本地bundle；false表示不能直接交付，按照正常的情况进行。
+	 */
+	private boolean canDirectDelivery(Bundle bundle){
+		Iterator<RouteEntry> iter = route_table_.route_table().iterator();
+		while (iter.hasNext()){
+			RouteEntry entry = iter.next();
+			if(entry.dest_pattern().match(bundle.dest())){
+				
+				if((entry.link().state() == state_t.OPEN || 
+						entry.link().state() == state_t.AVAILABLE )){
+					GeohistoryLog.i(test, String.format("遇到了目的节点，直接将bundle发送给目的节点%s",entry.dest_pattern().toString()));
+					
+
+					//原来的转发过程
+					if (deferred_list(entry.link()).list().contains(bundle)) {
+						GeohistoryLog.d(test, String.format("route_bundle bundle %d: "
+								+ "ignoring link %s since already deferred", bundle
+								.bundleid(), entry.link().name()));
+						continue;
+					}
+
+					// "because there may be bundles that already have deferred
+					// transmission on the link, we first call check_next_hop to
+					// get them into the queue before trying to route the new
+					// arrival, otherwise it might leapfrog the other deferred
+					// bundles" [DTN2]
+					check_next_hop(entry.link());
+
+					if (!fwd_to_nexthop(bundle, entry)) {
+						continue;
+					}
+					GeohistoryLog.i(test, String.format("直接转发给目的节点完成:dst(%s),copyNum(%d),bundle_%d,目的区域(0-3)：%d.%d.%d.%d",
+							bundle.dest().toString(),bundle.deliverBundleNum(),bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
+
+					
+					return true;
+				}
+			}
+		}
+		
+		return false;
+	}
 	/*private boolean route_to_thisLink(Bundle bundle,Nei)
 	{
 		return true;
 	}*/
 	
 	/**
-	 * 说明：由需要向本地的
+	 * 说明：转发与邻居之间交互邻居信息的bundle的数据
 	 * @param bundle
 	 * @return
 	 */
@@ -913,6 +1073,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			{
 //				Object object=areaInfoList.take();
 				Object object=messagequeue.take();
+				Log.v("geoRouterThread", "geoRouterThread is running");
 				if(object instanceof AreaInfo){
 					handle_areamoving((AreaInfo)object);//调用处理所在区域改变的代码
 					continue;
@@ -1336,25 +1497,238 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	 * geoDtn的实验，由192.168.5.11节点进行发送
 	 */
 	public void geoDtnExpriment(){
-		String eid_14="dtn://192.168.1.14.wu.com";
-		String eid_13="dtn://192.168.1.13.wu.com";
-		String eid_12="dtn://192.168.1.12.wu.com";
-		String eid_11="dtn://192.168.1.11.wu.com";
+		String eid_14="dtn://192.168.5.14.wu.com";
+		String eid_13="dtn://192.168.5.13.wu.com";
+		String eid_12="dtn://192.168.5.12.wu.com";
+		String eid_11="dtn://192.168.5.11.wu.com";
 		
-		int[] areaid_1_1_2={1854974240,1854974240,1587203,912940};
-		
-		int[] areaid_defo={1424349019,1424349019,1587203,912940};
+		/** 所在的区域的id
+		A-B-N-L	2138123745
+		B-C-M-N	1854974240
+		N-M-I-J	-259923744
+		L-N-J-K	-479623740
+
+		C-D-O-M	1645316860
+		D-E-F-O	1424349019
+		O-F-G-H	-1134001844
+		M-O-H-I	278199281
+		 */
+		int[] areaid_abnl={2138123745,2138123745,1587203,912940};
+		int[] areaid_bcmn={1854974240,1854974240,1587203,912940};
 		int[] areaid_nmij={-259923744,-259923744,1587203,912940};
+		int[] areaid_lnjk={-479623740,-479623740,1587203,912940};
+		
+		int[] areaid_cdom={1645316860,1645316860,1587203,912940};
+		int[] areaid_defo={1424349019,1424349019,1587203,912940};
+		int[] areaid_ofgh={-1134001844,-1134001844,1587203,912940};
+		int[] areaid_mohi={278199281,278199281,1587203,912940};
 		
 		File payload1=new File("/sdcard/dtnMessage/dtnMessage_1.txt");
 		File payload2=new File("/sdcard/dtnMessage/dtnMessage_2.txt");
 		File payload3=new File("/sdcard/dtnMessage/dtnMessage_3.txt");
 		
-		for(int i=0;i<1;i++){
-			SendBundleMsg send1=new SendBundleMsg(eid_14, payload2, false, areaid_defo, Bundle.DATA_BUNDLE);
+		for(int i=0;i<20;i++){
+			SendBundleMsg send0=new SendBundleMsg(eid_14, payload3, false, areaid_defo, Bundle.DATA_BUNDLE);
+			messagequeue.add(send0);
+			
+			/*SendBundleMsg send1=new SendBundleMsg(eid_14, payload2, false, areaid_defo, Bundle.DATA_BUNDLE);
 			messagequeue.add(send1);
 			SendBundleMsg send2=new SendBundleMsg(eid_13, payload3, false, areaid_nmij, Bundle.DATA_BUNDLE);
-			messagequeue.add(send2);
+			messagequeue.add(send2);*/
 		}
+	}
+	
+	//接受控制端的命令
+	public class waitOrder implements Runnable{
+		@Override
+		public void run() {
+			
+			String tag="GeohistoryRouter.waitOrder";
+			
+			//数据
+			int[] areaid_abnl={2138123745,2138123745,1587203,912940};
+			int[] areaid_bcmn={1854974240,1854974240,1587203,912940};
+			int[] areaid_nmij={-259923744,-259923744,1587203,912940};
+			int[] areaid_lnjk={-479623740,-479623740,1587203,912940};
+			
+			int[] areaid_cdom={1645316860,1645316860,1587203,912940};
+			int[] areaid_defo={1424349019,1424349019,1587203,912940};
+			int[] areaid_ofgh={-1134001844,-1134001844,1587203,912940};
+			int[] areaid_mohi={278199281,278199281,1587203,912940};
+			
+			/*HashMap<String,int[]> areaids=new HashMap<String, int[]>();
+			areaids.put("abnl", areaid_abnl);
+			areaids.put("bcmn", areaid_bcmn);
+			areaids.put("nmij", areaid_nmij);
+			areaids.put("lnjk", areaid_lnjk);
+			
+			areaids.put("cdom", areaid_cdom);
+			areaids.put("defo", areaid_defo);
+			areaids.put("ofgh", areaid_ofgh);
+			areaids.put("mohi", areaid_mohi);*/
+			
+			
+			String eid_14="dtn://192.168.5.14.wu.com";
+			String eid_13="dtn://192.168.5.13.wu.com";
+			String eid_12="dtn://192.168.5.12.wu.com";
+			String eid_11="dtn://192.168.5.11.wu.com";
+			
+			File payload1=new File("/sdcard/dtnMessage/dtnMessage_1.txt");
+			File payload2=new File("/sdcard/dtnMessage/dtnMessage_2.txt");
+			File payload3=new File("/sdcard/dtnMessage/dtnMessage_3.txt");
+			 
+			int port=64431;//端口号
+			DatagramSocket server;
+			byte[] buffer=new byte[1024];
+			try {
+				Log.i(tag,"start GeohistoryRouter.waitOrder");
+				server=new DatagramSocket(port);
+				
+				while(true){
+					if(BundleDaemon.getInstance().shutting_down())
+						break;
+					
+					String eid=null;
+					int areaid[]=null;
+					File payload=null;
+					
+					StringBuilder backinfo=new StringBuilder();
+					try {
+						Log.i(tag,"GeohistoryRouter.waitOrder wait for request");
+
+						DatagramPacket packet=new DatagramPacket(buffer, buffer.length);
+						server.receive(packet);
+						byte[] temp_byte=packet.getData();
+						int length=temp_byte[0];
+						String str=new String(temp_byte,1,length-1);
+						
+						Log.v(tag, String.format("receive cmd %s",str));
+						Log.v(tag,String.format("receive cmd(utf):%s",new String(temp_byte, 1, length-1, Charset.forName("utf-8"))));
+						
+						String s[]=str.split(" ");
+						for(int i=0;i<s.length;i++){
+							
+							String temp[]=s[i].split(":");
+							if(temp.length!=2){
+								Log.e(tag,String.format("错误的参数：%s",s[i]));
+								backinfo.append(String.format("错误的参数：%s",s[i]));
+								break;
+							}
+							String name=temp[0];
+							String value=temp[1];
+							
+							if(name.equals("eid")){
+								if(value.equals("11")){
+									eid=eid_11;
+								}
+								else if(value.equals("12")){
+									eid=eid_12;
+								}
+								else if(value.equals("13")){
+									eid=eid_13;
+								}
+								else if(value.equals("14")){
+									eid=eid_14;
+								}
+								else{
+									Log.e(tag,String.format("错误的参数：%s",s[i]));
+									backinfo.append(String.format("错误的参数：%s",s[i]));
+									break;
+								}
+							}
+							else if(name.equals("payload")){
+								if(value.equals("1")){
+									payload=payload1;
+								}
+								else if(value.equals("2")){
+									payload=payload2;
+								}
+								else if(value.equals("3")){
+									payload=payload3;
+								}
+								else{
+									Log.e(tag,String.format("错误的参数：%s",s[i]));
+									backinfo.append(String.format("错误的参数：%s",s[i]));
+									break;
+								}
+							}
+							else if(name.equals("areaid")){
+								if(value.equals("abnl")){
+									areaid=areaid_abnl;
+								}
+								else if(value.equals("bcmn")){
+									areaid=areaid_bcmn;
+								}
+								else if(value.equals("nmij")){
+									areaid=areaid_nmij;
+								}
+								else if(value.equals("lnjk")){
+									areaid=areaid_lnjk;
+								}
+								else if(value.equals("cdom")){
+									areaid=areaid_cdom;
+								}
+								else if(value.equals("defo")){
+									areaid=areaid_defo;
+								}
+								else if(value.equals("ofgh")){
+									areaid=areaid_ofgh;
+								}
+								else if(value.equals("mohi")){
+									areaid=areaid_mohi;
+								}
+								else{
+									Log.e(tag,String.format("错误的参数：%s",s[i]));
+									backinfo.append(String.format("错误的参数：%s",s[i]));
+									break;
+								}
+							}
+							else{
+								Log.e(tag,String.format("错误的参数：%s",s[i]));
+								backinfo.append(String.format("错误的参数：%s",s[i]));
+								break;
+							}
+						}
+						
+						if(eid!=null && payload!=null && areaid!=null){
+							SendBundleMsg send0=new SendBundleMsg(eid, payload, false, areaid, Bundle.DATA_BUNDLE);
+							messagequeue.add(send0);
+							backinfo.append(String.format("send bundle to %s ,with areaid(%d.%d.%d.%d) paylod(%s)",
+									eid,areaid[0],areaid[1],areaid[2],areaid[3],payload.getPath()));
+						}
+						
+						Log.v(tag, String.format("backinfo: %s",backinfo.toString()));
+						
+						//将反馈消息送给客户端
+						/*DatagramPacket back=new DatagramPacket(backinfo.toString().getBytes(), backinfo.toString().getBytes().length,
+								packet.getAddress(), packet.getPort());
+						server.send(back);*/
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+						break;
+					}
+				}
+			} catch (SocketException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+		}
+	}
+	
+	/**
+	 * 提取bundle的唯一标识字符串
+	 * @param bundle
+	 * @return
+	 */
+	private static String StringOfBundle(Bundle bundle){
+		//bundle转关键字
+		String bundlestr=String.format("%s#%s#%d#%d#%b#%d#%d#%d",
+				bundle.dest().toString(),bundle.source().toString(),bundle.creation_ts().seconds(),bundle.creation_ts().seqno(),
+				bundle.is_fragment(),bundle.frag_offset(),bundle.orig_length(),bundle.payload().length());
+		
+		return bundlestr;
 	}
 }

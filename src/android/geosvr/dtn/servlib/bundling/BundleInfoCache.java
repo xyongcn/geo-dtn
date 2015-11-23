@@ -75,8 +75,7 @@ public class BundleInfoCache implements Serializable{
 			
 			if (bundle_info_cache_.containsKey(bundle)) 
 				return false;
-			else
-			{
+			else{
 				bundle_info_cache_.put(bundlestr, prevhop);
 				return true;
 			}
