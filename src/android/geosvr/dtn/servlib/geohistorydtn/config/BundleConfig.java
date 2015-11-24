@@ -10,10 +10,10 @@ import android.geosvr.dtn.applib.DTNAPICode.dtn_bundle_priority_t;
 public class BundleConfig {
 
 	//较少副本转发的副本上限
-	public static final int DELIVERBUNDLENUM=10;
+	public static final int DELIVERBUNDLENUM=2;
 	
 	//受限洪泛算法的副本上限
-	public static final int FLOODBUNDLENUM=100;
+	public static final int FLOODBUNDLENUM=2;
 	
 	
 	/**

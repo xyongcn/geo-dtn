@@ -288,8 +288,10 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		nei.addTimeCount();//添加当前邻居的计时器
 		
 //		b)	触发邻居之间交换信息的bundle发送,发送本节点的历史区域信息
+		AreaManager.getInstance().lockHistoryAreaMovingFile();//锁住文件的读写
 		File file=new File(AreaManager.historyAreaFilePath);
 		SendBundleMsg sendbundle=new SendBundleMsg(nei.getEid().toString(), file, false, AreaInfo.defaultAreaId(), Bundle.NEI_AREA_BUNDLE);
+		AreaManager.getInstance().unlockHistoryAreaMovingFile();//解锁自身规律文件的锁
 		messagequeue.add(sendbundle);
 		/*try {
 			GeohistoryLog.i(tag, String.format("准备向邻居%s发送了自己的区域信息的bundle", nei.getEid().toString()));
@@ -1700,7 +1702,7 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 									eid,areaid[0],areaid[1],areaid[2],areaid[3],payload.getPath()));
 						}
 						
-						Log.v(tag, String.format("backinfo: %s",backinfo.toString()));
+						Log.v(test, String.format("backinfo: %s",backinfo.toString()));
 						
 						//将反馈消息送给客户端
 						/*DatagramPacket back=new DatagramPacket(backinfo.toString().getBytes(), backinfo.toString().getBytes().length,

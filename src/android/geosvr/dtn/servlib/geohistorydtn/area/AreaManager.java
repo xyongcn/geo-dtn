@@ -14,6 +14,7 @@ import java.util.List;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVector;
 import android.geosvr.dtn.servlib.geohistorydtn.frequencyVector.FrequencyVectorManager;
 import android.geosvr.dtn.servlib.geohistorydtn.log.GeohistoryLog;
+import android.geosvr.dtn.systemlib.thread.Lock;
 import android.util.Log;
 
 /** 
@@ -26,6 +27,8 @@ public class AreaManager
 	private static String tag="AreaManager";
 	public static String historyAreaFilePath="/sdcard/geoHistory_dtn/historyarea.obj";
 	private static String historyAreaMovingFilePath="/sdcard/dtn_test_data/areamoving.log";
+	
+	private Lock lockHistoryAreaMoving;
 	
 	private static class SingleAreaManager
 	{
@@ -44,6 +47,7 @@ public class AreaManager
 	private AreaManager()
 	{
 		areaMap=new HashMap<String, Area>(500);
+		lockHistoryAreaMoving=new Lock();
 		//需要通过每次使用前使用init
 //		init();
 	}
@@ -51,7 +55,7 @@ public class AreaManager
 	public void init()	
 	{
 
-		File file=new File("/sdcard/geoHistory_dtn/historyarea");
+		File file=new File(historyAreaFilePath);
 		//从文件中读取历史的区域信息
 		try
 		{
@@ -74,6 +78,9 @@ public class AreaManager
 					}
 				}
 				in.close();
+				
+				GeohistoryLog.i(tag, String.format("从初始文件中获得本地移动的移动规律，并打印出来："));
+				printAllAreaMoving();
 			}
 			/*for(Area area:areaMap.values())
 			{
@@ -90,6 +97,18 @@ public class AreaManager
 			
 			e.printStackTrace();
 		}
+		
+		
+	}
+	
+	//锁住自身移动规律的修改，防止在修改移动规律的时候被读取
+	public void lockHistoryAreaMovingFile(){
+		lockHistoryAreaMoving.lock();
+	}
+	
+	//解锁自身移动规律文件的修改
+	public void unlockHistoryAreaMovingFile(){
+		lockHistoryAreaMoving.unlock();
 	}
 	
 	/**
@@ -176,6 +195,7 @@ public class AreaManager
 				// TODO Auto-generated method stub
 				try
 				{
+					lockHistoryAreaMovingFile();
 					File file=new File(historyAreaFilePath);
 					if(!file.getParentFile().exists())
 						file.getParentFile().mkdirs();
@@ -194,6 +214,9 @@ public class AreaManager
 				catch(IOException e)
 				{
 					e.printStackTrace();
+				}
+				finally{
+					unlockHistoryAreaMovingFile();
 				}
 
 			}
@@ -274,12 +297,15 @@ public class AreaManager
 	public void shutdown(){
 		//测试验证结果正确性,在结束的时候将本节点的所有的区域移动规律打印出来
 		GeohistoryLog.i(tag, "退出AreaManager时，打印本节点的移动规律");
+		printAllAreaMoving();
+		areaMap.clear();
+	}
+	
+	public void printAllAreaMoving(){
 		int i=1;
 		for(Area area:areaMap.values()){
 			GeohistoryLog.d(tag,String.format("第%d个区域的移动规律：\n%s",i++,area.toString()));
 		}
-		
-		areaMap.clear();
 	}
 	
 	//获取位置以及改变位置的流程

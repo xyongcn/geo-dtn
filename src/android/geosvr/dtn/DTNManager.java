@@ -357,20 +357,6 @@ public class DTNManager extends Activity  {
 			wifiManager.setWifiEnabled(true);
 		}
 		
-		//启动程序时就开启DTN服务
-		/*try {
-			start_DTN_service();
-			start_DTN_service_UI_update();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NotFoundException e) {
-			e.printStackTrace();
-		} catch (InvalidDTNConfigurationException e) {
-			e.printStackTrace();
-		}*/
-		
-		
 		//时间管理器的第一次启动
 		TimeManager.getInstance().init();
 		//区域管理器从文件读入已有的历史区域
@@ -386,6 +372,21 @@ public class DTNManager extends Activity  {
 			
 		} catch (NotFoundException e) {
 			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+
+		//启动程序时就开启DTN服务
+		try {
+			start_DTN_service();
+			start_DTN_service_UI_update();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NotFoundException e) {
+			e.printStackTrace();
+		} catch (InvalidDTNConfigurationException e) {
 			e.printStackTrace();
 		}
 	}
