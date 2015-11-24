@@ -106,6 +106,7 @@ import android.geosvr.dtn.servlib.contacts.Link;
 import android.geosvr.dtn.servlib.contacts.LinkSet;
 import android.geosvr.dtn.servlib.contacts.NamedAttribute;
 import android.geosvr.dtn.servlib.conv_layers.ConvergenceLayer;
+import android.geosvr.dtn.servlib.geohistorydtn.routing.GeoHistoryRouter;
 import android.geosvr.dtn.servlib.naming.EndpointID;
 import android.geosvr.dtn.servlib.naming.EndpointIDPattern;
 import android.geosvr.dtn.servlib.reg.AdminRegistration;
@@ -1087,6 +1088,12 @@ public class BundleDaemon extends BundleEventHandler implements Runnable {
 			
 			bundle = ((BundleTransmittedEvent) event).bundle();
 			Log.w("TEST","BUNDLE_TRANSMITTED");
+			
+			//判断geoHistoryRouter里面的bundle的是否可以删除bundle
+			if(BundleDaemon.getInstance().router() instanceof GeoHistoryRouter && bundle.getBundleType()==Bundle.DATA_BUNDLE){
+				if(!bundle.geoRouterTransmmited)
+					bundle=null;
+			}
 		}
 
 		if (event.type() == event_type_t.BUNDLE_DELIVERED) {

@@ -178,6 +178,9 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				BundleDaemon.getInstance().post_at_head(new BundleDeleteRequest(bundle,BundleProtocol.status_report_reason_t.REASON_NO_ADDTL_INFO));
 				return;
 			}
+			else{
+				Log.i(test,String.format("添加bundle查重表项"));
+			}
 //			super.handle_bundle_received(event);
 			route_bundle(bundle);
 		}
@@ -705,18 +708,18 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 				if (entry.dest_pattern().match(BundleDaemon.getInstance().local_eid()))
 					continue;
 				
-				//如果link不该被发送，则
-				if (!should_fwd(bundle, entry)) {
-					EndpointID prevhop = reception_cache_.lookup(bundle);
-					if (prevhop != null) {
-						if (prevhop.equals(entry.link().remote_eid())
-								&& !prevhop.equals(EndpointID.NULL_EID())) {
-							GeohistoryLog.w(tag, String.format("should_fwd: this link(remote:%s) should not be send",entry.dest_pattern().toString()));
-							GeohistoryLog.w(test, String.format("should_fwd: this link(remote:%s) should not be send",entry.dest_pattern().toString()));
-							continue;
-						}
+				//判断该bundle是否从该link收到过或者发送过，决定是否需要转发
+				EndpointID prevhop = reception_cache_.lookup(bundle);
+				if (prevhop != null) {
+					if (prevhop.equals(entry.link().remote_eid())
+							&& !prevhop.equals(EndpointID.NULL_EID())) {
+						GeohistoryLog.w(tag, String.format("bundle在这个link(remote:%s)收到过或者发送过",prevhop.toString()));
+						GeohistoryLog.w(test, String.format("bundle在这个link(remote:%s)收到过或者发送过",prevhop.toString()));
+						continue;
 					}
-					
+					else{
+						Log.i(tag,String.format("link(%s)上发送bundle(%d)并不重复",prevhop.toString(),bundle.bundleid()));
+					}
 				}
 				
 				//遇到了目标节点
@@ -898,8 +901,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 					}
 					GeohistoryLog.i(test, String.format("直接转发给目的节点完成:dst(%s),copyNum(%d),bundle_%d,目的区域(0-3)：%d.%d.%d.%d",
 							bundle.dest().toString(),bundle.deliverBundleNum(),bundle.bundleid(),bundle.zeroArea(),bundle.firstArea(),bundle.secondArea(),bundle.thirdArea()));
-
-					
+					//可以删除bundle了
+					bundle.geoRouterTransmmited=true;
 					return true;
 				}
 			}

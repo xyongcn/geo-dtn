@@ -1332,6 +1332,11 @@ public class Bundle implements Serializable,Cloneable {
 	public final static int DATA_BUNDLE=1;
 	public final static int NEI_AREA_BUNDLE=2;
 	
+	/**
+	 * 用于geoHistoryRouter里面判断bundle是否传输完成的标识
+	 */
+	public boolean geoRouterTransmmited=false;
+	
 	//获取bundle的类型
 	public int getBundleType()
 	{
