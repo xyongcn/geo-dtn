@@ -199,8 +199,10 @@ public class AreaManager
 					File file=new File(historyAreaFilePath);
 					if(!file.getParentFile().exists())
 						file.getParentFile().mkdirs();
-					if(!file.exists())
-						file.createNewFile();
+					/*if(!file.exists())
+						file.createNewFile();*/
+					if(file.exists())
+						file.delete();
 					
 					ObjectOutputStream out=new ObjectOutputStream(new FileOutputStream(file, false));
 					for(Area area:areaMap.values())

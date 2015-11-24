@@ -215,7 +215,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 			//在bundle还没有被free之前就保存到文件
 			NeighbourManager.getInstance().saveNeighbourAreaPayload(event.bundle().payload(), event.bundle().source().toString());
 			
-			SaveNeighbourArea saveNeighbourArea=new SaveNeighbourArea(event.bundle().source());
+//			SaveNeighbourArea saveNeighbourArea=new SaveNeighbourArea(event.bundle().source());
+			SaveNeighbourArea saveNeighbourArea=new SaveNeighbourArea(event.bundle().source(),event.bundle());
 			messagequeue.add(saveNeighbourArea);
 			
 			
@@ -1264,13 +1265,18 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 	 *
 	 */
 	private class SaveNeighbourArea{
-//		Bundle bundle;
+		Bundle bundle;
 		EndpointID eid;
 		/*public SaveNeighbourArea(Bundle bundle){
 			this.bundle=bundle;
 		}*/
 		public SaveNeighbourArea(EndpointID eid){
 			this.eid=eid;
+		}
+		
+		public SaveNeighbourArea(EndpointID eid,Bundle bundle){
+			this.eid=eid;
+			this.bundle=bundle;
 		}
 	}
 	
