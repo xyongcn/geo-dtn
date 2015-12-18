@@ -105,6 +105,32 @@ public class Neighbour implements Serializable
 	}
 	
 	/**
+	 * 根据邻居的payload的buffer来更新邻居的移动规律
+	 * @param buffer
+	 */
+	public void generateArea(byte[] buffer)
+	{
+//		neighbourArea=new NeighbourArea(neighbourEid, payload);
+		if(neighbourArea==null)
+		{
+			neighbourArea=new NeighbourArea(neighbourEid);
+		} 
+		
+		try {
+			neighbourArea.updateArea(buffer);
+		} catch (StreamCorruptedException e) {
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	/**
 	 * 根据本地文件保存的邻居的区域信息来更改区域记录
 	 */
 	public void init()

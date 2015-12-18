@@ -376,6 +376,11 @@ public class BundlePayload implements Serializable {
 		} else
 			return data_;
 	}
+	
+	//非线程安全的读取数据的方式
+	/*public byte[] getBuffer(){
+		return data_;
+	}*/
 
 	/**
 	 * Copy Payload content to the specified file regardless of payload location.

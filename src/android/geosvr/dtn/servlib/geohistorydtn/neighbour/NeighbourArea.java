@@ -230,6 +230,32 @@ public class NeighbourArea implements Serializable
 		in.close();
 	}
 	
+	/**
+	 * 利用payload里面的缓存来更新邻居的移动规律
+	 * @param buffer
+	 * @throws StreamCorruptedException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	public void updateArea(byte[] buffer) throws StreamCorruptedException, FileNotFoundException, IOException, ClassNotFoundException{
+		Log.i(tag,"利用payload buffer来更新内存中邻居的区域移动规律");
+		ByteArrayInputStream bin=new ByteArrayInputStream(buffer);
+		ObjectInputStream in=new ObjectInputStream(bin);
+		Object obj=null;
+		while((obj=in.readObject())!=null)
+		{
+			if(obj instanceof Area)
+			{
+				Area area=(Area)obj;
+				String s=area.getAreaLevel()+"#"+area.getAreaId();
+				areaMap.put(s, area);
+			}
+		}
+		in.close();
+		bin.close();
+	}
+	
 	/*public static boolean payload_to_neighbourAreaFile(EndpointID eid,File file)
 	{
 		if(file==null)

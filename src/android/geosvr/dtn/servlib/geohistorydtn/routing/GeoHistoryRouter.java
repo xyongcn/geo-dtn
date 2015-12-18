@@ -1,7 +1,10 @@
 package android.geosvr.dtn.servlib.geohistorydtn.routing;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.StreamCorruptedException;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -30,6 +33,7 @@ import android.geosvr.dtn.apps.DTNSend;
 import android.geosvr.dtn.servlib.bundling.Bundle;
 import android.geosvr.dtn.servlib.bundling.BundleDaemon;
 import android.geosvr.dtn.servlib.bundling.BundleInfoCache;
+import android.geosvr.dtn.servlib.bundling.BundlePayload;
 import android.geosvr.dtn.servlib.bundling.BundleProtocol;
 import android.geosvr.dtn.servlib.bundling.BundlePayload.location_t;
 import android.geosvr.dtn.servlib.bundling.ForwardingInfo;
@@ -42,6 +46,7 @@ import android.geosvr.dtn.servlib.bundling.event.ContactUpEvent;
 import android.geosvr.dtn.servlib.bundling.event.LinkCreatedEvent;
 import android.geosvr.dtn.servlib.bundling.event.event_source_t;
 import android.geosvr.dtn.servlib.bundling.exception.BundleListLockNotHoldByCurrentThread;
+import android.geosvr.dtn.servlib.bundling.exception.BundleLockNotHeldByCurrentThread;
 import android.geosvr.dtn.servlib.contacts.Link;
 import android.geosvr.dtn.servlib.contacts.Link.link_type_t;
 import android.geosvr.dtn.servlib.contacts.Link.state_t;
@@ -212,27 +217,62 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		
 		if(event.bundle().getBundleType()==Bundle.NEI_AREA_BUNDLE){
 			
-			//在bundle还没有被free之前就保存到文件
-			NeighbourManager.getInstance().saveNeighbourAreaPayload(event.bundle().payload(), event.bundle().source().toString());
+			//添加从payload的buff里面读取
+			Log.d(test," start read from neighbour area moving from payload buffer ");
+			Neighbour nei=NeighbourManager.getInstance().checkNeighbour(event.bundle().source());
 			
-//			SaveNeighbourArea saveNeighbourArea=new SaveNeighbourArea(event.bundle().source());
-			SaveNeighbourArea saveNeighbourArea=new SaveNeighbourArea(event.bundle().source(),event.bundle());
-			messagequeue.add(saveNeighbourArea);
+			BundlePayload pay=event.bundle().payload();
+			byte[] buff=new byte[pay.length()];
+			pay.read_data(0, pay.length(), buff);
 			
+			nei.generateArea(buff);
+			nei.printAreaInfo();
+			/*String str=new String(buff,Charset.forName("utf-8"));
+			Log.i(test,String.format("read buff:%s",str));*/
+			/*try {
+				ObjectInputStream in=new ObjectInputStream(new ByteArrayInputStream(buff));
+				Object obj=null;
+				while((obj=in.readObject())!=null)
+				{
+					if(obj instanceof Area)
+					{
+						Area area=(Area)obj;
+						String s=area.getAreaLevel()+"#"+area.getAreaId();
+//						areaMap.put(s, area);
+						Log.v(test,String.format("read area from payload buffer,%s",s));
+					}
+					else{
+						Log.v(test,String.format("this object is't the area"));
+					}
+				}
+				in.close();
+			} catch (StreamCorruptedException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+			finally{
+				Log.d(test,"read from payload buffer over");
+			}*/
 			
-			/*GeohistoryLog.i(tag,String.format("收到来自%s的区域移动信息",event.bundle().source().toString()));
-			Bundle b=event.bundle();
-//			Neighbour nei=NeighbourManager.getInstance().getNeighbour(b.source());//用这个方式可能得到的是没有被创建的邻居
-			Neighbour nei=NeighbourManager.getInstance().checkNeighbour(b.source());
-			nei.generateArea(b.payload());//用收到的邻居的bundle来
 			
 			//向该邻居发送队列里面需要发送的bundle（邻居间交换bundle的路由算法）
 			//只需要将队列中的bundle向该link重新发送即可
 			if(messagequeue.contains(routeAllBundle)){
 				messagequeue.remove(routeAllBundle);
-			}*/
-//			messagequeue.add(routeAllBundle);
-			//由于已经获取到该邻居的区域移动信息，可以对其进行相应的转发（这里最好重写一下reroute函数，对其中的）
+			}
+			messagequeue.add(routeAllBundle);//用来将队列里面的bundle重新发送
+			
+			//在bundle还没有被free之前就保存到文件
+			/*NeighbourManager.getInstance().saveNeighbourAreaPayload(event.bundle().payload(), event.bundle().source().toString());
+			
+//			SaveNeighbourArea saveNeighbourArea=new SaveNeighbourArea(event.bundle().source());
+			SaveNeighbourArea saveNeighbourArea=new SaveNeighbourArea(event.bundle().source(),event.bundle());
+			messagequeue.add(saveNeighbourArea);*/
+			
+			
 		}
 		super.handle_bundle_delivered(event);
 	}
@@ -289,11 +329,15 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		nei.addTimeCount();//添加当前邻居的计时器
 		
 //		b)	触发邻居之间交换信息的bundle发送,发送本节点的历史区域信息
-		AreaManager.getInstance().lockHistoryAreaMovingFile();//锁住文件的读写
+		
 		File file=new File(AreaManager.historyAreaFilePath);
-		SendBundleMsg sendbundle=new SendBundleMsg(nei.getEid().toString(), file, false, AreaInfo.defaultAreaId(), Bundle.NEI_AREA_BUNDLE);
-		AreaManager.getInstance().unlockHistoryAreaMovingFile();//解锁自身规律文件的锁
-		messagequeue.add(sendbundle);
+//		File file=new File("/sdcard/geoHistory_dtn/temp.txt");
+		if(file.exists()){
+			AreaManager.getInstance().lockHistoryAreaMovingFile();//锁住文件的读写
+			SendBundleMsg sendbundle=new SendBundleMsg(nei.getEid().toString(), file, false, AreaInfo.defaultAreaId(), Bundle.NEI_AREA_BUNDLE);
+			AreaManager.getInstance().unlockHistoryAreaMovingFile();//解锁自身规律文件的锁
+			messagequeue.add(sendbundle);
+		}
 		/*try {
 			GeohistoryLog.i(tag, String.format("准备向邻居%s发送了自己的区域信息的bundle", nei.getEid().toString()));
 			sendMessage(nei.getEid().toString(), file, false, AreaInfo.defaultAreaId(),Bundle.NEI_AREA_BUNDLE);
@@ -1142,6 +1186,8 @@ public class GeoHistoryRouter extends TableBasedRouter implements Runnable
 		EndpointID eid=saveNeighbour.eid;
 		GeohistoryLog.i(tag,String.format("收到来自%s的区域移动信息bundle",eid.toString()));
 //		Neighbour nei=NeighbourManager.getInstance().getNeighbour(b.source());//用这个方式可能得到的是没有被创建的邻居
+		
+		
 		Neighbour nei=NeighbourManager.getInstance().checkNeighbour(eid);
 //		nei.generateArea(b.payload());//用收到的邻居的bundle来
 		nei.generateArea();//利用本地存下来的payload文件来更新邻居的区域移动频率

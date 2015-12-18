@@ -221,6 +221,8 @@ public class AreaManager
 					unlockHistoryAreaMovingFile();
 				}
 
+				Log.i(tag,"更新完本地的移动记录文件");
+				printAllAreaMoving();
 			}
 		})).start();
 		

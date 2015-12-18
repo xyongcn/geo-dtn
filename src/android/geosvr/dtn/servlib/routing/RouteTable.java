@@ -30,6 +30,7 @@ import android.geosvr.dtn.servlib.contacts.Link.state_t;
 import android.geosvr.dtn.servlib.naming.EndpointID;
 import android.geosvr.dtn.servlib.naming.EndpointIDPattern;
 import android.geosvr.dtn.servlib.routing.BundleRouter;
+import android.geosvr.dtn.servlib.routing.epidemic.EpidemicBundleRouter;
 import android.geosvr.dtn.systemlib.thread.Lock;
 import android.geosvr.dtn.systemlib.util.StringVector;
 import android.os.Bundle;
@@ -457,10 +458,32 @@ public class RouteTable{
 	    			
 	    			
     				//这里是静态路由以及其他路由获取转发bundle的路由表的地方
-    				if (!entry.dest_pattern().match(eid))
-    					continue;
+    				/*if (!entry.dest_pattern().match(eid))
+    					continue;*/
 	    			
-	    			
+	    			//epidemic路由方式将返回整个路由表来进行路由发送
+	    			Log.i(TAG, "BundleRouter.name="+BundleRouter.name_);
+	    			BundleRouter router=BundleDaemon.getInstance().router();
+	    			if(router instanceof EpidemicBundleRouter)
+	    			{
+//	    				if (entry.dest_pattern().match(eid))
+//	    					continue;
+	    				//调试，如果目标节点为自身则不把它加到转发表中
+	    				if(entry.dest_pattern().match(BundleDaemon.getInstance().local_eid()))
+	    				{
+	    					Log.i("序号查重","不对自己进行发送");
+	    					continue;
+	    				}
+	    				
+	    				//Need to get whole routing table to emulate epidemic due to table based router.
+	    				Log.i("Bytewalla4", "Router type epidemic, pass whole table!");
+	    			}
+	    			else
+	    			{
+	    				//这里是静态路由以及其他路由获取转发bundle的路由表的地方
+	    				if (!entry.dest_pattern().match(eid))
+	    					continue;
+	    			}
 	    			
 	    			if (entry.link() == null)
 	    			{

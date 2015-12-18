@@ -250,7 +250,7 @@ public class NeighbourManager {
 			{
 				neighAreaFile.delete();
 			}
-			neighAreaFile.createNewFile();
+//			neighAreaFile.createNewFile();
 			
 			//将邻居的区域记录保存到本地，利用payload里面原有的方法
 			GeohistoryLog.i(tag, String.format("将邻居（ %s）发来的payload里面的区域移动规律存储到文件中", eid));

@@ -332,10 +332,11 @@ public class TestDataLogger {
 			return;
 		}
 		
+		//做geohistory对比实验日志格式
 		String record_data =String.format(
 				// Time written, bundle id , size ( bytes ), time start( readable ), time end ( readable ),  time used ( millisecond ), battery begin , battery end, battery consume
-				//时分秒，bundle id,总长度,开始时间,结束时间,使用时间,当前时间,目的地址,
-			      "%s,%d,%d,%s,%s,%d,%d,%s,%s",
+				//时分秒，bundle id,总长度,开始时间,结束时间,使用时间,当前时间,目的地址,bundle产生时的秒标识,bundle产生时的毫秒标识,
+			      "%s,%d,%d,%s,%s,%d,%d,%s,%s,%d,%d",
 			      df.format(current_date),
 			      bundle.bundleid(),
 			      total_length,
@@ -344,8 +345,11 @@ public class TestDataLogger {
 			      time_used,
 			      current_date.getTime(),
 			      bundle.dest().toString(),
-			      bundle.source().toString()
+			      bundle.source().toString(),
+			      bundle.creation_ts().seconds(),
+			      bundle.creation_ts().seqno()
 		);
+		
 		/*String record_data =String.format(
 				// Time written, bundle id , size ( bytes ), time start( readable ), time end ( readable ),  time used ( millisecond ), battery begin , battery end, battery consume
 			      "%s,%d,%d,%s,%s,%d",
